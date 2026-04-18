@@ -1034,33 +1034,60 @@ function App() {
             <NotificationModal title="权限不足" message="您当前是普通用户，无权执行此修改/删除操作。请联系管理员。" type="error" onClose={() => setShowPermissionModal(false)} />
         )}
 
-        <header className="bg-white border-b border-zinc-100 px-3 py-2 flex justify-between items-center z-20 shrink-0">
-          <div className="flex items-center gap-2 overflow-hidden"><h1 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 shrink-0"><img src="https://lh3.googleusercontent.com/d/1Rri7vVK9YyhQEdqzvgmjQ4kzNZdbQuxV" alt="Logo" className="w-7 h-7 object-contain" onError={(e)=>{e.target.src="https://via.placeholder.com/64?text=Cat"}} /><span className="hidden xs:inline">哈基米助手</span></h1><div className="flex bg-zinc-100 rounded-lg p-0.5 gap-0.5 overflow-x-auto no-scrollbar max-w-[220px] md:max-w-none"><button onClick={() => setActiveTab('scripts')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'scripts' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>话术对话</button><button onClick={() => setActiveTab('images')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'images' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>图片</button><button onClick={() => setActiveTab('notice')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'notice' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>公告</button></div></div>
-          <div className="flex items-center gap-2">
-              {currentUser && (<div className={`user-badge hidden md:flex ${userRole === 'admin' ? 'admin' : 'bg-slate-100 border-zinc-200 text-slate-600'}`}><div className={`user-avatar ${userRole === 'admin' ? 'bg-zinc-700 text-white' : 'bg-zinc-300 text-white'}`}><Icon d={userRole === 'admin' ? PATHS.Shield : PATHS.User} className="w-3 h-3"/></div><span>{currentUser}</span>{userRole === 'admin' && <span className="ml-1 text-[9px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full border border-zinc-300 font-bold">管理员</span>}</div>)}
+        <header className="app-header px-3 py-2 flex justify-between items-center z-20 shrink-0">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <h1 className="app-brand shrink-0">
+              <img src="https://lh3.googleusercontent.com/d/1Rri7vVK9YyhQEdqzvgmjQ4kzNZdbQuxV" alt="Logo" className="w-7 h-7 object-contain rounded-lg" onError={(e)=>{e.target.src="https://via.placeholder.com/64?text=Cat"}} />
+              <span className="hidden xs:inline">哈基米助手</span>
+              <span className="dot-grad hidden md:inline-block" title="在线"></span>
+            </h1>
+            <div className="tab-pills overflow-x-auto no-scrollbar max-w-[240px] md:max-w-none">
+              <button onClick={() => setActiveTab('scripts')} className={`tab-pill pill-scripts ${activeTab === 'scripts' ? 'active' : ''}`}>
+                <Icon d={PATHS.Chat} className="w-3 h-3"/> 话术对话
+              </button>
+              <button onClick={() => setActiveTab('images')} className={`tab-pill pill-images ${activeTab === 'images' ? 'active' : ''}`}>
+                <Icon d={PATHS.Image} className="w-3 h-3"/> 图片
+              </button>
+              <button onClick={() => setActiveTab('notice')} className={`tab-pill pill-notice ${activeTab === 'notice' ? 'active' : ''}`}>
+                <Icon d={PATHS.Magic} className="w-3 h-3"/> 公告
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+              {currentUser && (
+                <div className={`user-badge hidden md:flex ${userRole === 'admin' ? 'admin' : ''}`}>
+                  <div className="user-avatar">
+                    <Icon d={userRole === 'admin' ? PATHS.Shield : PATHS.User} className="w-3 h-3"/>
+                  </div>
+                  <span>{currentUser}</span>
+                  {userRole === 'admin' && <span className="ml-1 text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full border border-amber-200 font-bold">管理员</span>}
+                </div>
+              )}
 
-              {/* 仅 aratakito 管理员可见账号管理 */}
               {currentUser === 'aratakito' && userRole === 'admin' && (
-                  <button onClick={() => { setActiveTab('accounts'); fetchAccounts(); }} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'accounts' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}>
+                  <button onClick={() => { setActiveTab('accounts'); fetchAccounts(); }} className={`tool-btn accent-rose hidden md:inline-flex ${activeTab === 'accounts' ? 'active' : ''}`}>
                       <Icon d={PATHS.User} className="w-3 h-3"/> <span>账号</span>
                   </button>
               )}
 
-              <button onClick={handleDownloadBackup} className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-md transition-colors border border-transparent hover:border-zinc-200 flex items-center gap-1.5 hidden md:flex"><Icon d={PATHS.Download} className="w-3 h-3"/> <span>数据备份</span></button>
-              {userRole === 'admin' && <button onClick={() => setActiveTab('data_management')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'data_management' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Database} className="w-3 h-3"/> <span>数据管理</span></button>}
+              <button onClick={handleDownloadBackup} className="tool-btn accent-sky hidden md:inline-flex"><Icon d={PATHS.Download} className="w-3 h-3"/> <span>数据备份</span></button>
+              {userRole === 'admin' && <button onClick={() => setActiveTab('data_management')} className={`tool-btn accent-emerald hidden md:inline-flex ${activeTab === 'data_management' ? 'active' : ''}`}><Icon d={PATHS.Database} className="w-3 h-3"/> <span>数据管理</span></button>}
 
-              <button onClick={() => { setShowTrackerModal(true); setHasUnreadUpdates(false); }} className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-md transition-colors border border-transparent hover:border-zinc-200 flex items-center gap-1.5 relative">
+              <button onClick={() => { setShowTrackerModal(true); setHasUnreadUpdates(false); }} className="tool-btn accent-amber relative">
                   <Icon d={PATHS.Eye} className="w-3 h-3"/> <span>监控</span>
-                  {hasUnreadUpdates && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>}
+                  {hasUnreadUpdates && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>}
               </button>
 
-              <button onClick={() => setActiveTab('training')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'training' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Brain} className="w-3 h-3"/> <span>更新AI</span></button>
-              {userRole === 'admin' && (<button onClick={() => setActiveTab('bets')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'bets' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Search} className="w-3 h-3"/> <span>注单</span></button>)}
-              {userRole === 'admin' && lastDebugInfo && <button onClick={() => setShowDebugModal(true)} className="btn-icon-only text-zinc-500 hover:bg-zinc-100" title="查看调试信息"><Icon d={PATHS.Bug} className="w-5 h-5"/></button>}
-              <button onClick={handleLogout} className="btn-icon-only md:hidden"><Icon d={PATHS.Close} className="w-5 h-5"/></button><button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 underline hidden md:block">退出</button><button onClick={fetchData} className="btn-icon-only hover:bg-zinc-100 rounded-full">{loading ? <div className="spinner" style={{width:18, height:18, borderWidth:2}}></div> : <Icon d={PATHS.Refresh} className="w-5 h-5"/>}</button></div>
+              <button onClick={() => setActiveTab('training')} className={`tool-btn hidden md:inline-flex ${activeTab === 'training' ? 'active' : ''}`}><Icon d={PATHS.Brain} className="w-3 h-3"/> <span>更新AI</span></button>
+              {userRole === 'admin' && (<button onClick={() => setActiveTab('bets')} className={`tool-btn accent-amber hidden md:inline-flex ${activeTab === 'bets' ? 'active' : ''}`}><Icon d={PATHS.Search} className="w-3 h-3"/> <span>注单</span></button>)}
+              {userRole === 'admin' && lastDebugInfo && <button onClick={() => setShowDebugModal(true)} className="btn-icon-only" title="查看调试信息"><Icon d={PATHS.Bug} className="w-5 h-5"/></button>}
+              <button onClick={handleLogout} className="btn-icon-only md:hidden"><Icon d={PATHS.Close} className="w-5 h-5"/></button>
+              <button onClick={handleLogout} className="text-xs text-slate-400 hover:text-red-500 underline hidden md:block">退出</button>
+              <button onClick={fetchData} className="btn-icon-only rounded-full">{loading ? <div className="spinner" style={{width:18, height:18, borderWidth:2}}></div> : <Icon d={PATHS.Refresh} className="w-5 h-5"/>}</button>
+          </div>
         </header>
         
-         <main className="relative flex-1 overflow-hidden bg-zinc-50">
+         <main className="relative flex-1 overflow-hidden" style={{background:'#f6f8fc'}}>
            
            {/* ===== 账号管理模块 (仅 aratakito) ===== */}
            {activeTab === 'accounts' && currentUser === 'aratakito' && (
@@ -1112,19 +1139,29 @@ function App() {
             <div className="absolute inset-0 flex flex-col">
               <div className="bg-white border-b border-zinc-100 px-4 py-1 flex items-center justify-end shrink-0"><button onClick={() => setIsTemplateMode(!isTemplateMode)} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-zinc-100 text-zinc-500 hover:bg-zinc-200"><Icon d={isTemplateMode ? PATHS.Magic : PATHS.Save} className="w-3 h-3"/>{isTemplateMode ? '返回生成模式' : '进入模板管理'}</button></div>
               {!isTemplateMode ? (
-                  <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 bg-zinc-50 overflow-y-auto md:overflow-hidden">
+                  <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 notice-wrap overflow-y-auto md:overflow-hidden">
                       <div className="w-full md:w-1/4 flex flex-col gap-3 shrink-0">
-                          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 px-3 py-2 flex items-center gap-2"><Icon d={PATHS.Magic} className={`w-4 h-4 ${selectedGenTemplateId ? 'text-slate-400' : 'text-purple-500'}`}/>
+                          <div className="panel px-3 py-2 flex items-center gap-2">
+                              <Icon d={PATHS.Magic} className={`w-4 h-4 ${selectedGenTemplateId ? 'text-slate-400' : 'text-fuchsia-500'}`}/>
                               <select value={selectedGenTemplateId} onChange={(e) => { setSelectedGenTemplateId(e.target.value); if(e.target.value) { const t = allTemplates.find(x => x.id === e.target.value); if(t) setViewTemplate(t); } else { setViewTemplate(null); } }} className="flex-1 bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"> <option value="">🤖 AI 自动匹配模板</option> {allTemplates.map(t => ( <option key={t.id} value={t.id}>📄 {t.type}</option> ))} </select>
                               {selectedGenTemplateId && ( <button onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); }} className="text-slate-400 hover:text-red-500"> <Icon d={PATHS.Close} className="w-4 h-4"/> </button> )}
                           </div>
-                          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden min-h-[120px] md:h-2/3"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex items-center gap-2"><Icon d={PATHS.Edit} className="text-purple-500"/> 原始通知</div><textarea className="flex-1 p-3 text-sm outline-none resize-none bg-zinc-50/30 placeholder:text-slate-300 min-h-[100px]" placeholder="粘贴运营商通知..." value={rawNotice} onChange={e => setRawNotice(e.target.value)}></textarea></div>
-                          <button onClick={handleGenerateNotice} disabled={noticeLoading} className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg text-white font-bold flex flex-row md:flex-col items-center justify-center gap-2 hover:scale-[1.02] transition disabled:opacity-50 py-3 touch-target md:flex-1">{noticeLoading ? <div className="spinner border-white/30 border-t-white" style={{width:20,height:20}}></div> : <><Icon d={PATHS.Magic} className="w-5 h-5 md:w-8 md:h-8"/> <span>{selectedGenTemplateId ? '按模板生成' : '智能生成公告'}</span></>}</button>
+                          <div className="panel flex flex-col overflow-hidden min-h-[120px] md:h-2/3">
+                              <div className="panel-head" style={{background:'linear-gradient(180deg,#fdf2f8,#fce7f3)'}}><span className="flex items-center gap-2"><Icon d={PATHS.Edit} className="text-pink-500"/> 原始通知</span></div>
+                              <textarea className="flex-1 p-3 text-sm outline-none resize-none bg-white placeholder:text-slate-300 min-h-[100px]" placeholder="粘贴运营商通知..." value={rawNotice} onChange={e => setRawNotice(e.target.value)}></textarea>
+                          </div>
+                          <button onClick={handleGenerateNotice} disabled={noticeLoading} className="rounded-xl shadow-lg text-white font-bold flex flex-row md:flex-col items-center justify-center gap-2 hover:scale-[1.02] transition disabled:opacity-50 py-3 touch-target md:flex-1" style={{background:'linear-gradient(135deg,#8b5cf6 0%,#6366f1 50%,#ec4899 100%)', boxShadow:'0 10px 28px -8px rgba(139, 92, 246, 0.55)'}}>{noticeLoading ? <div className="spinner border-white/30 border-t-white" style={{width:20,height:20}}></div> : <><Icon d={PATHS.Magic} className="w-5 h-5 md:w-8 md:h-8"/> <span>{selectedGenTemplateId ? '按模板生成' : '智能生成公告'}</span></>}</button>
                       </div>
                       <div className="flex-1 flex flex-col gap-3">
-                          <div className="flex items-center justify-between px-2 text-xs text-slate-400"><span>当前模式: {selectedGenTemplateId ? (allTemplates.find(t=>t.id===selectedGenTemplateId)?.type || '手动模式') : (viewTemplate ? `已选模板 [${viewTemplate.type}]` : '🤖 AI 自动匹配模板')}</span>{viewTemplate && <button onClick={() => { setViewTemplate(null); setSelectedGenTemplateId(''); }} className="text-blue-500 hover:underline">取消选择</button>}</div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">{[{ k: 'front', t: '前台公告' }, { k: 'mail', t: '站内信' }, { k: 'inner', t: '对内公告' }].map(item => (<div key={item.k} className={`bg-white rounded-xl shadow-sm border flex flex-col overflow-hidden min-h-[150px] ${genResult && genResult[item.k] && genResult[item.k].startsWith('❌') ? 'error-result' : 'border-zinc-200'}`}><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>{item.t}</span><button onClick={() => genResult && handleCopy(genResult[item.k])} className="text-blue-500 hover:text-blue-700 text-xs px-2 py-1">复制</button></div><textarea className="notice-textarea" value={genResult ? genResult[item.k] : ''} onChange={(e) => setGenResult({...genResult, [item.k]: e.target.value})} placeholder="等待生成..."></textarea></div>))}</div>
-                          {genResult && (<div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-4 flex flex-col gap-3"><div className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon d={PATHS.Edit} className="text-orange-500"/> 结果评价</div><div className="flex flex-col md:flex-row gap-2"><button onClick={() => handleAnnFeedback('good')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`flex-1 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_good' ? 'bg-zinc-500 scale-105' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{annSubmitStatus==='success_good' ? '✅ 已学习' : '完美 (Keep)'}</button><div className="flex-1 flex gap-2"><textarea className="flex-1 border rounded-lg p-2 text-xs bg-zinc-50 resize-none" placeholder="如有问题，请填写修正原因..." value={annCorrectReason} onChange={e => setAnnCorrectReason(e.target.value)}></textarea><button onClick={() => handleAnnFeedback('bad')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`px-4 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_bad' ? 'bg-zinc-600 scale-105' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{annSubmitStatus==='success_bad' ? '✅ 已学习' : '提交修正'}</button></div></div></div>)}
+                          <div className="flex items-center justify-between px-2 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 animate-pulse"></span>
+                              当前模式: <span className="font-semibold text-indigo-700">{selectedGenTemplateId ? (allTemplates.find(t=>t.id===selectedGenTemplateId)?.type || '手动模式') : (viewTemplate ? `已选模板 [${viewTemplate.type}]` : '🤖 AI 自动匹配模板')}</span>
+                            </span>
+                            {viewTemplate && <button onClick={() => { setViewTemplate(null); setSelectedGenTemplateId(''); }} className="text-indigo-600 hover:underline">取消选择</button>}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">{[{ k: 'front', t: '前台公告', cls:'notice-card-front', ic:'text-pink-500' }, { k: 'mail', t: '站内信', cls:'notice-card-mail', ic:'text-blue-500' }, { k: 'inner', t: '对内公告', cls:'notice-card-inner', ic:'text-violet-500' }].map(item => (<div key={item.k} className={`panel ${item.cls} flex flex-col overflow-hidden min-h-[150px] ${genResult && genResult[item.k] && genResult[item.k].startsWith('❌') ? 'error-result' : ''}`}><div className="panel-head"><span className="flex items-center gap-2"><Icon d={PATHS.Edit} className={`w-3.5 h-3.5 ${item.ic}`}/>{item.t}</span><button onClick={() => genResult && handleCopy(genResult[item.k])} className="text-indigo-600 hover:text-indigo-800 text-xs px-2 py-1 rounded hover:bg-indigo-50">复制</button></div><textarea className="notice-textarea" value={genResult ? genResult[item.k] : ''} onChange={(e) => setGenResult({...genResult, [item.k]: e.target.value})} placeholder="等待生成..."></textarea></div>))}</div>
+                          {genResult && (<div className="panel p-4 flex flex-col gap-3"><div className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon d={PATHS.Edit} className="text-orange-500"/> 结果评价</div><div className="flex flex-col md:flex-row gap-2"><button onClick={() => handleAnnFeedback('good')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`flex-1 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_good' ? 'scale-105' : ''}`} style={{background: annSubmitStatus==='success_good' ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#10b981,#059669)', boxShadow:'0 6px 14px -4px rgba(16,185,129,0.45)'}}>{annSubmitStatus==='success_good' ? '✅ 已学习' : '完美 (Keep)'}</button><div className="flex-1 flex gap-2"><textarea className="flex-1 main-input text-xs resize-none" placeholder="如有问题，请填写修正原因..." value={annCorrectReason} onChange={e => setAnnCorrectReason(e.target.value)}></textarea><button onClick={() => handleAnnFeedback('bad')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`px-4 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_bad' ? 'scale-105' : ''}`} style={{background:'linear-gradient(135deg,#f43f5e,#e11d48)', boxShadow:'0 6px 14px -4px rgba(244,63,94,0.45)'}}>{annSubmitStatus==='success_bad' ? '✅ 已学习' : '提交修正'}</button></div></div></div>)}
                       </div>
                   </div>
               ) : (
@@ -1173,23 +1210,57 @@ function App() {
              <div className="absolute inset-0 flex flex-col md:flex-row">
               <section className="w-full md:w-1/3 md:min-w-[320px] bg-white border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col shadow-lg z-10 shrink-0 h-[40%] md:h-full overflow-hidden">
                   <div className="p-2 md:p-3 border-b border-zinc-100 flex gap-2">
-                      <div className="relative w-1/3 max-w-[120px]"><button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full bg-zinc-50 border border-zinc-200 text-slate-700 text-xs rounded-lg px-3 py-2 pr-8 outline-none focus:ring-2 focus:ring-zinc-200 text-left truncate flex items-center justify-between relative"><span className="truncate">{selectedCategory || '全部分类'}</span><div className={`absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`}><Icon d={PATHS.ChevronDown} className="w-3 h-3"/></div></button>{isCategoryOpen && (<><div className="fixed inset-0 z-20" onClick={() => setIsCategoryOpen(false)}></div><div className="absolute top-full left-0 mt-1 w-full bg-white border border-zinc-100 rounded-lg shadow-xl z-30 max-h-60 overflow-y-auto py-1 custom-scrollbar"><div className={`px-3 py-2 text-xs cursor-pointer transition-colors ${!selectedCategory ? 'text-zinc-700 font-bold bg-zinc-50' : 'text-slate-600 hover:bg-zinc-50'}`} onClick={() => { setSelectedCategory(''); setIsCategoryOpen(false); }}>全部分类</div>{uniqueCategories.map(c => (<div key={c} className={`px-3 py-2 text-xs cursor-pointer truncate transition-colors ${selectedCategory === c ? 'text-zinc-700 font-bold bg-zinc-50' : 'text-slate-600 hover:bg-zinc-50'}`} onClick={() => { setSelectedCategory(c); setIsCategoryOpen(false); }}>{c}</div>))}</div></>)}</div>
-                      <div className="relative flex-1"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search} /></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索话术..." className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-zinc-200 focus:border-blue-400 transition-all" /></div>
-                      <button onClick={openAddScript} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg">新增</button>
+                      <div className="relative w-1/3 max-w-[130px]">
+                        <button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2 pr-7 outline-none text-left truncate flex items-center justify-between relative hover:border-indigo-300 transition">
+                          {selectedCategory ? (<span className={`cat-chip cat-c${window.UtilsLib.categoryColor(selectedCategory)}`} style={{padding:'2px 6px', fontSize:'10px'}}>{selectedCategory}</span>) : (<span className="truncate text-slate-600 font-semibold">全部分类</span>)}
+                          <div className={`absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`}><Icon d={PATHS.ChevronDown} className="w-3 h-3"/></div>
+                        </button>
+                        {isCategoryOpen && (<>
+                          <div className="fixed inset-0 z-20" onClick={() => setIsCategoryOpen(false)}></div>
+                          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-30 max-h-60 overflow-y-auto py-1 custom-scrollbar">
+                            <div className={`px-3 py-2 text-xs cursor-pointer transition-colors flex items-center gap-2 ${!selectedCategory ? 'font-bold bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`} onClick={() => { setSelectedCategory(''); setIsCategoryOpen(false); }}>
+                              <span className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500"></span>全部分类
+                            </div>
+                            {uniqueCategories.map(c => {
+                              const cn = window.UtilsLib.categoryColor(c);
+                              return (
+                                <div key={c} className={`px-3 py-2 text-xs cursor-pointer truncate transition-colors flex items-center gap-2 ${selectedCategory === c ? 'font-bold bg-slate-50' : 'text-slate-600 hover:bg-slate-50'}`} onClick={() => { setSelectedCategory(c); setIsCategoryOpen(false); }}>
+                                  <span className={`cat-chip cat-c${cn}`} style={{padding:'1px 6px', fontSize:'10px'}}>{c}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>)}
+                      </div>
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-2.5 text-indigo-400"><Icon d={PATHS.Search} /></span>
+                        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索话术..." className="main-input pl-9" />
+                      </div>
+                      <button onClick={openAddScript} className="hidden md:inline-flex btn-primary"><Icon d={PATHS.Plus} className="w-3 h-3"/>新增</button>
                   </div>
                   <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2 bg-zinc-50/30 relative">
                       {scripts.length === 0 && !loading && (<div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs"><Icon d={PATHS.Chat} className="w-8 h-8 mb-2 opacity-50"/>暂无话术数据</div>)}
-                      {filteredScripts.map(s => (
-                          <div key={s.id} className={`bg-white p-3 rounded-lg border group relative transition-all active:bg-zinc-50 cursor-pointer ${scriptForm.id===s.id ? 'border-orange-400 ring-1 ring-orange-100' : 'border-zinc-200'}`} onClick={() => window.innerWidth < 768 ? handleCopyScript(s.content, s.id) : startEdit(s)}>
-                              <div className="flex justify-between mb-1"><span className="text-[10px] font-bold bg-zinc-50 text-zinc-700 px-2 py-0.5 rounded uppercase">{s.category}</span><div className="flex gap-2 md:opacity-0 group-hover:opacity-100 transition"><button onClick={(e) => { e.stopPropagation(); handleCopyScript(s.content, s.id); }} className={`p-1 ${copiedScriptId === s.id ? 'text-green-600' : 'text-slate-400'}`}><Icon d={copiedScriptId === s.id ? PATHS.Check : PATHS.Copy}/></button><button onClick={(e) => { e.stopPropagation(); startEdit(s); }} className="p-1 text-slate-400 hover:text-zinc-800"><Icon d={PATHS.Edit}/></button><button onClick={(e) => { e.stopPropagation(); handleDelete('script', s); }} className="p-1 text-slate-400 hover:text-red-500"><Icon d={PATHS.Trash}/></button></div></div>
-                              <div className="text-xs text-slate-400 mb-1 truncate font-mono bg-zinc-50 px-1 rounded inline-block">Kw: {s.keywords}</div>
+                      {filteredScripts.map(s => {
+                          const catN = window.UtilsLib.categoryColor(s.category);
+                          return (
+                          <div key={s.id} className={`list-card group cursor-pointer cat-border-c${catN} ${scriptForm.id===s.id ? 'is-active' : ''}`} onClick={() => window.innerWidth < 768 ? handleCopyScript(s.content, s.id) : startEdit(s)}>
+                              <div className="flex justify-between items-start mb-1.5">
+                                <span className={`cat-chip cat-c${catN}`}>{s.category || '未分类'}</span>
+                                <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition">
+                                  <button onClick={(e) => { e.stopPropagation(); handleCopyScript(s.content, s.id); }} className={`p-1 ${copiedScriptId === s.id ? 'text-green-600' : 'text-slate-400 hover:text-indigo-600'}`}><Icon d={copiedScriptId === s.id ? PATHS.Check : PATHS.Copy}/></button>
+                                  <button onClick={(e) => { e.stopPropagation(); startEdit(s); }} className="p-1 text-slate-400 hover:text-indigo-600"><Icon d={PATHS.Edit}/></button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleDelete('script', s); }} className="p-1 text-slate-400 hover:text-red-500"><Icon d={PATHS.Trash}/></button>
+                                </div>
+                              </div>
+                              <div className="text-xs text-slate-400 mb-1 truncate font-mono bg-slate-50 px-1.5 py-0.5 rounded inline-block">Kw: {s.keywords}</div>
                               <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words line-clamp-2">{s.content}</div>
                           </div>
-                      ))}
+                          );
+                      })}
                   </div>
               </section>
 
-              <section className="flex-1 bg-slate-100 p-2 md:p-6 flex flex-col gap-2 md:gap-4 min-h-0 relative">
+              <section className="flex-1 p-2 md:p-6 flex flex-col gap-2 md:gap-4 min-h-0 relative" style={{background:'radial-gradient(700px 400px at 100% 0%, rgba(99,102,241,0.05), transparent 60%), radial-gradient(600px 400px at 0% 100%, rgba(236,72,153,0.04), transparent 60%), #f6f8fc'}}>
                   <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden relative min-h-[30vh]">
                       <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar flex flex-col gap-4">
                           {chatHistory.length === 0 ? (

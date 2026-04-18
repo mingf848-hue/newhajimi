@@ -37,6 +37,16 @@ const UtilsLib = {
         return { title, message, type };
     },
 
+    // 分类颜色 —— 根据字符串哈希稳定映射到 8 种调色板
+    categoryColor(name) {
+        if (!name) return 6; // 默认 6 (蓝)
+        let h = 0;
+        for (let i = 0; i < name.length; i++) {
+            h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        }
+        return (h % 8) + 1;
+    },
+
     // 安全加载异步数据
     async safeLoad(asyncFn, defaultValue = null) {
         try {
