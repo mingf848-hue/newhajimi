@@ -16,7 +16,6 @@ const firebaseConfig = {
     measurementId: "G-2H3YST6145"
 };
 
-// 全局安全序列化工具
 window.safeStringify = (obj, indent = 2) => {
     const cache = new Set();
     return JSON.stringify(obj, (key, value) => {
@@ -34,16 +33,25 @@ try {
     signInAnonymously(auth).catch(() => {});
     window.storage = getStorage(app);
 
-    // ==========================================
-    // 全局 fbOps 对象：所有的数据库 API 交互
-    // ==========================================
     window.fbOps = {
         apiCall: async (method, path, body = null) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000); 
             try {
-                const opts = { method, headers: { 'Content-Type': 'application/json' }, signal: controller.signal };
+                // 1. 修复：防止浏览器 GET 缓存 (加上随机时间戳)
+                if (method === 'GET') {
+                    path += (path.includes('?') ? '&' : '?') + 't=' + Date.now();
+                }
+
+                // 2. 修复：强制 no-store
+                const opts = { 
+                    method, 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    signal: controller.signal,
+                    cache: 'no-store'
+                };
                 if (body) opts.body = JSON.stringify(body);
+                
                 const res = await fetch(path, opts);
                 if (!res.ok) throw new Error(await res.text());
                 return await res.json();
@@ -63,13 +71,19 @@ try {
             return window.fbOps.apiCall('GET', `/api/db/scripts?user=${encodeURIComponent(user)}`);
         },
         saveScript: async (script) => {
-            return window.fbOps.apiCall('POST', '/api/db/scripts', script);
+            // 3. 修复：补全 user 和 time 字段，保证 MongoDB 排序生效！
+            const user = localStorage.getItem('hajimi_username') || 'Unknown';
+            const payload = { ...script, user };
+            if (!payload.time) payload.time = new Date().toLocaleString();
+            
+            return window.fbOps.apiCall('POST', '/api/db/scripts', payload);
         },
         deleteScript: async (id) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/scripts?id=${id}`);
+            // 4. 修复：统一修改所有 DELETE 路由格式为 /:collection/:id
+            return window.fbOps.apiCall('DELETE', `/api/db/scripts/${id}`);
         },
 
-        // 图片管理 (含 Storage 操作)
+        // 图片管理
         getImages: async () => {
             return window.fbOps.apiCall('GET', '/api/db/images');
         },
@@ -78,17 +92,17 @@ try {
             const storageRef = ref(window.storage, storagePath);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
-            return window.fbOps.apiCall('POST', '/api/db/images', { url, title, tags, storagePath });
+            return window.fbOps.apiCall('POST', '/api/db/images', { url, title, tags, storagePath, time: new Date().toLocaleString() });
         },
         deleteImage: async (id, storagePath) => {
             if (storagePath) {
                 const storageRef = ref(window.storage, storagePath);
                 await deleteObject(storageRef).catch(e => console.warn("Storage delete failed", e));
             }
-            return window.fbOps.apiCall('DELETE', `/api/db/images?id=${id}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/images/${id}`);
         },
 
-        // AI 设定与训练
+        // AI 设定与知识库
         getCloudPrompts: async () => {
             return window.fbOps.apiCall('GET', '/api/db/settings');
         },
@@ -99,18 +113,19 @@ try {
             return window.fbOps.apiCall('GET', '/api/db/knowledge');
         },
 
-        // 训练日志管理
+        // 训练日志
         getTrainingDataAll: async () => {
             return window.fbOps.apiCall('GET', '/api/db/training');
         },
         saveFeedback: async (feedback) => {
+            if (!feedback.time) feedback.time = new Date().toLocaleString();
             return window.fbOps.apiCall('POST', '/api/db/training', feedback);
         },
         deleteTrainingData: async (id) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/training?id=${id}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/training/${id}`);
         },
 
-        // 公告管理
+        // 公告模板
         getTemplates: async () => {
             return window.fbOps.apiCall('GET', '/api/db/templates');
         },
@@ -118,16 +133,17 @@ try {
             return window.fbOps.apiCall('POST', '/api/db/templates', template);
         },
         deleteTemplate: async (id) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/templates?id=${id}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/templates/${id}`);
         },
         getAnnLogsAll: async () => {
             return window.fbOps.apiCall('GET', '/api/db/annLogs');
         },
         saveAnnFeedback: async (feedback) => {
+            if (!feedback.time) feedback.time = new Date().toLocaleString();
             return window.fbOps.apiCall('POST', '/api/db/annLogs', feedback);
         },
         deleteAnnLog: async (id) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/annLogs?id=${id}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/annLogs/${id}`);
         },
         getRecentBadAnnouncements: async () => {
             const logs = await window.fbOps.getAnnLogsAll();
@@ -142,7 +158,7 @@ try {
             return window.fbOps.apiCall('POST', '/api/db/tracker', ticket);
         },
         deleteTrackedTicket: async (orderId) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/tracker?id=${orderId}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/tracker/${orderId}`);
         },
 
         // 变量管理
@@ -150,13 +166,15 @@ try {
             return window.fbOps.apiCall('GET', '/api/db/vars');
         },
         addCustomVar: async (v) => {
-            return window.fbOps.apiCall('POST', '/api/db/vars', { name: v });
+            // 特殊处理变量添加
+            return window.fbOps.apiCall('POST', '/api/db/vars', { _id: v, name: v });
         },
         deleteCustomVar: async (v) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/vars?name=${encodeURIComponent(v)}`);
+            // 保持与 server.js 的删除路径一致
+            return window.fbOps.apiCall('DELETE', `/api/db/vars/${encodeURIComponent(v)}`);
         },
 
-        // 账号管理 (仅管理员)
+        // 账号管理
         getAccounts: async () => {
             return window.fbOps.apiCall('GET', '/api/db/accounts');
         },
@@ -164,7 +182,7 @@ try {
             return window.fbOps.apiCall('POST', '/api/db/accounts', acc);
         },
         deleteAccount: async (id) => {
-            return window.fbOps.apiCall('DELETE', `/api/db/accounts?id=${id}`);
+            return window.fbOps.apiCall('DELETE', `/api/db/accounts/${id}`);
         },
 
         // 备份
@@ -173,7 +191,6 @@ try {
         }
     };
 
-    // 通知核心 App 组件：Firebase 已就绪
     window.firebaseLoaded = true;
     if (window.onFirebaseReady) {
         window.onFirebaseReady();
