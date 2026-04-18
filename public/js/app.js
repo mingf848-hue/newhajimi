@@ -107,6 +107,10 @@ function App() {
         setAnnStaticContext(`${annBase}\n\n### 知识库/规则 (AI Knowledge Base)\n${annKB || "暂无训练规则"}\n\n### 模板库 (Template Library)\n${annTemplateLib}`);
     };
 
+    const notify = (title, message, type = 'error') => {
+        setNotification(window.UtilsLib.createNotification(title, message, type));
+    };
+
     const checkSession = () => {
         const lastActive = localStorage.getItem(SESSION_KEY_TIME);
         if (!lastActive) return false;
@@ -132,29 +136,22 @@ function App() {
     const loadData = async () => {
         try {
             if (!window.fbOps) throw new Error("Firebase Ops not loaded");
-            const user = localStorage.getItem(SESSION_KEY_USER); 
-            let dbScripts = [], dbImages = [], dbSettings = {}, dbTemplates = [], dbCustomVars = [], dbTracked = [];
-            try { dbScripts = await window.fbOps.getScripts(); } catch(e) {}
-            try { dbImages = await window.fbOps.getImages(); } catch(e) {}
-            try { dbSettings = await window.fbOps.getCloudPrompts(); } catch(e) {}
-            try { dbTemplates = await window.fbOps.getTemplates(); } catch(e) {}
-            try { dbCustomVars = await window.fbOps.getCustomVars(); } catch(e) {}
-            try { dbTracked = await window.fbOps.getTrackedTickets(user); } catch(e) {}
+            const user = localStorage.getItem(SESSION_KEY_USER);
+            const data = await window.UtilsLib.loadDataInParallel(window.fbOps, user);
 
-            setScripts(dbScripts || []);
-            const dbKnowledge = await window.fbOps.getKnowledge();
-            setExtraKnowledge(dbKnowledge || []);
-            setImages(dbImages || []);
-            setAllTemplates(dbTemplates || []);
-            setTrackedTickets(dbTracked || []); 
-            if(dbTracked && dbTracked.length > 0) setShowTrackerModal(false); 
+            setScripts(data.scripts || []);
+            setExtraKnowledge(data.knowledge || []);
+            setImages(data.images || []);
+            setAllTemplates(data.templates || []);
+            setTrackedTickets(data.tracked || []);
+            if(data.tracked && data.tracked.length > 0) setShowTrackerModal(false);
 
-            if (dbCustomVars && dbCustomVars.length > 0) { setTemplateVars([...INITIAL_VARS, ...dbCustomVars]); }
+            if (data.customVars && data.customVars.length > 0) { setTemplateVars([...INITIAL_VARS, ...data.customVars]); }
 
-            let cBase = dbSettings?.chat_base;
-            let cKnow = dbSettings?.chat_knowledge || "";
-            let bRules = dbSettings?.business_rules;
-            
+            let cBase = data.settings?.chat_base;
+            let cKnow = data.settings?.chat_knowledge || "";
+            let bRules = data.settings?.business_rules;
+
             if (!cBase) { cBase = DEFAULT_CHAT_BASE; await window.fbOps.saveCloudPrompts({ chat_base: DEFAULT_CHAT_BASE }); }
             if (!bRules) { bRules = DEFAULT_BIZ_RULES; }
 
@@ -162,13 +159,13 @@ function App() {
             setChatKnowledge(cKnow);
             setBusinessRules(bRules);
 
-            let aBase = dbSettings?.ann_base;
-            let aKnow = dbSettings?.ann_knowledge || "";
+            let aBase = data.settings?.ann_base;
+            let aKnow = data.settings?.ann_knowledge || "";
             if (!aBase) { aBase = DEFAULT_ANN_BASE; await window.fbOps.saveCloudPrompts({ ann_base: DEFAULT_ANN_BASE }); }
             setAnnBase(aBase);
             setAnnKnowledge(aKnow);
-            
-            buildStaticCache(dbScripts || [], dbTemplates || [], cKnow, aKnow);
+
+            buildStaticCache(data.scripts || [], data.templates || [], cKnow, aKnow);
 
             if (user === 'aratakito') {
                 fetchAccounts();
@@ -188,20 +185,8 @@ function App() {
 
     const addToTracker = async (ticketDetails, rawItem) => {
         if (!ticketDetails || ticketDetails.length === 0) return;
-        const mainDetail = ticketDetails[0]; 
-        const isPending = rawItem.outcome === null || rawItem.outcome === 0 || rawItem.outcome === 1;
-        const isSettled = !isPending;
-        
-        let resultStr = "未结算";
-        let status = 'pending';
-
-        if (isSettled) {
-           if (rawItem.outcome === 4 || rawItem.outcome === 5) { resultStr = "赢 " + rawItem.localProfitAmount; status = 'win'; }
-           else if (rawItem.outcome === 3 || rawItem.outcome === 6) { resultStr = "输 " + rawItem.localProfitAmount; status = 'loss'; }
-           else if (rawItem.outcome === 2) { resultStr = "走水"; status = 'draw'; }
-           else if (rawItem.remark && rawItem.remark.includes('取消')) { resultStr = "注单取消"; status = 'cancelled'; }
-           else if (rawItem.remark && (rawItem.remark.includes('拒单') || rawItem.remark.includes('失败'))) { resultStr = "投注失败"; status = 'cancelled'; }
-        }
+        const mainDetail = ticketDetails[0];
+        const { resultStr, status } = window.UtilsLib.mapTicketOutcome(rawItem);
 
         const ticketObj = {
             orderId: rawItem.orderNo,
@@ -239,13 +224,7 @@ function App() {
                 const isPending = rawItem.outcome === null || rawItem.outcome === 0 || rawItem.outcome === 1;
                 if (!isPending) {
                     changesCount++;
-                    let resultStr = "未结算";
-                    let status = 'pending';
-                    if (rawItem.outcome === 4 || rawItem.outcome === 5) { resultStr = "赢 " + rawItem.localProfitAmount; status = 'win'; }
-                    else if (rawItem.outcome === 3 || rawItem.outcome === 6) { resultStr = "输 " + rawItem.localProfitAmount; status = 'loss'; }
-                    else if (rawItem.outcome === 2) { resultStr = "走水"; status = 'draw'; }
-                    else if (rawItem.remark && rawItem.remark.includes('取消')) { resultStr = "注单取消"; status = 'cancelled'; }
-                    else if (rawItem.remark && (rawItem.remark.includes('拒单') || rawItem.remark.includes('失败'))) { resultStr = "投注失败"; status = 'cancelled'; }
+                    const { resultStr, status } = window.UtilsLib.mapTicketOutcome(rawItem);
                     const updatedT = { ...t, status: status, resultStr: resultStr, updateTime: new Date().toLocaleString() };
                     await window.fbOps.saveTrackedTicket(updatedT);
                     const idx = newTickets.findIndex(x => x.orderId === t.orderId);
