@@ -21,21 +21,21 @@ function LoginScreen({ onLogin }) {
     };
     return (
         <div className="login-bg">
-            <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm flex flex-col items-center fade-in mx-4">
+            <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm flex flex-col items-center fade-in mx-4">
                 <div className="w-16 h-16 mb-4 rounded-full bg-slate-50 flex items-center justify-center p-1 shadow-sm border border-slate-100">
                     <img src="https://lh3.googleusercontent.com/d/1Rri7vVK9YyhQEdqzvgmjQ4kzNZdbQuxV" className="w-full h-full object-contain rounded-full" onError={(e) => { e.target.src = "https://via.placeholder.com/64?text=Cat" }} />
                 </div>
                 <h2 className="text-xl font-bold text-slate-700">哈基米助手</h2>
                 <div className="mb-6 mt-1">
-                    <span className="text-xs px-2 py-1 rounded rainbow-text">Pro Max Ultra Plus+</span>
+                    <span className="text-xs text-zinc-400">智能助手系统</span>
                 </div>
                 <div className="w-full relative mb-4">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                         <Icon d={PATHS.Lock} />
                     </span>
-                    <input type="text" placeholder="输入账号或6位动态码" className="w-full pl-10 pr-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-100 transition text-base" value={code} onChange={e => setCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+                    <input type="text" placeholder="输入账号或6位动态码" className="w-full pl-10 pr-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-zinc-200 transition text-base" value={code} onChange={e => setCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
                 </div>
-                <button onClick={handleLogin} disabled={status === 'checking'} className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 disabled:opacity-70 transition active:scale-95 touch-target">{status === 'checking' ? '验证中...' : '进入系统'}</button>
+                <button onClick={handleLogin} disabled={status === 'checking'} className="w-full bg-zinc-800 text-white py-3 rounded-lg font-bold hover:bg-zinc-900 disabled:opacity-70 transition active:scale-95 touch-target">{status === 'checking' ? '验证中...' : '进入系统'}</button>
                 {status === 'error' && <p className="text-xs text-red-500 mt-3 font-medium">验证失败，请检查输入</p>}
             </div>
         </div>
@@ -46,18 +46,17 @@ function StatusBar({ usage }) {
     return (
         <div className="status-bar">
             <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                <span>DB: OK</span>
-                <span className="cloud-indicator bg-blue-50 text-blue-600 px-2 py-0.5 rounded">Multi-Agent (Gemini 3.1 Pro 核心)</span>
+                <span className="text-slate-400">运行正常</span>
                 {usage && usage.cachedContentTokenCount > 0 ? (
-                    <span className="cloud-indicator bg-purple-100 text-purple-600 px-2 py-0.5 rounded font-bold">⚡️ 缓存命中 (Cached)</span>
+                    <span className="bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded">快速模式</span>
                 ) : (
-                    <span className="cloud-indicator bg-slate-100 text-slate-500 px-2 py-0.5 rounded">标准模式 (Standard)</span>
+                    <span className="bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded">标准模式</span>
                 )}
                 {usage && (
                     <div className="flex items-center gap-2 ml-2 border-l pl-2 border-slate-200 font-mono">
-                        <span className="text-slate-600" title="实际计费的输入Token">In: <span className="font-bold">{usage.promptTokenCount || 0}</span></span>
+                        <span className="text-slate-500" title="输入Token">In: <span className="font-bold">{usage.promptTokenCount || 0}</span></span>
                         {usage.cachedContentTokenCount > 0 ? (
-                            <span className="text-purple-600 bg-purple-50 px-1 rounded border border-purple-100" title="省下的缓存Token">Cache: <span className="font-bold">{usage.cachedContentTokenCount}</span></span>
+                            <span className="text-zinc-500 bg-zinc-50 px-1 rounded border border-zinc-200" title="缓存Token">Cache: <span className="font-bold">{usage.cachedContentTokenCount}</span></span>
                         ) : (
                             <span className="text-slate-300" title="本次未命中缓存">Cache: 0</span>
                         )}
@@ -67,9 +66,6 @@ function StatusBar({ usage }) {
                     </div>
                 )}
             </div>
-            <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-400">⚡️ 双层智能路由质检</span>
-            </div>
         </div>
     );
 }
@@ -77,7 +73,7 @@ function StatusBar({ usage }) {
 function NotificationModal({ title, message, type = 'success', onClose }) {
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xs text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>
                     <Icon d={type === 'success' ? PATHS.Check : PATHS.Close} className="w-6 h-6" />
                 </div>
@@ -85,7 +81,7 @@ function NotificationModal({ title, message, type = 'success', onClose }) {
                     <h3 className="text-lg font-bold text-slate-800">{title}</h3>
                     <p className="text-sm text-slate-500 mt-1">{message}</p>
                 </div>
-                <button onClick={onClose} className="bg-slate-800 text-white w-full py-2.5 rounded-xl font-bold text-sm hover:bg-slate-900 transition">知道了</button>
+                <button onClick={onClose} className="bg-zinc-800 text-white w-full py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-900 transition">知道了</button>
             </div>
         </div>
     );
@@ -140,17 +136,17 @@ function HighlightedTextarea({ value, onChange, placeholder, className, onFocus,
 function SaveConfirmModal({ type, onClose, onConfirm }) {
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${type === 'ann' ? 'bg-purple-100 text-purple-500' : 'bg-blue-100 text-blue-500'}`}>
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-100 text-zinc-500">
                     <Icon d={type === 'ann' ? PATHS.Brain : PATHS.Chat} className="w-6 h-6" />
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-slate-800">确认保存设定？</h3>
-                    <p className="text-sm text-slate-500 mt-1">这将更新云端数据库中的<span className={`font-bold mx-1 ${type === 'ann' ? 'text-purple-600' : 'text-blue-600'}`}>{type === 'ann' ? '公告' : '客服'}</span>AI规则。</p>
+                    <p className="text-sm text-slate-500 mt-1">这将更新云端数据库中的<span className="font-bold mx-1 text-zinc-700">{type === 'ann' ? '公告' : '客服'}</span>AI规则。</p>
                 </div>
                 <div className="flex gap-3 w-full">
-                    <button onClick={onClose} className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-200 transition">取消</button>
-                    <button onClick={onConfirm} className={`flex-1 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition ${type === 'ann' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}>确认保存</button>
+                    <button onClick={onClose} className="flex-1 bg-zinc-100 text-zinc-600 py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-200 transition">取消</button>
+                    <button onClick={onConfirm} className="flex-1 bg-zinc-800 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-900 transition">确认保存</button>
                 </div>
             </div>
         </div>
@@ -160,15 +156,15 @@ function SaveConfirmModal({ type, onClose, onConfirm }) {
 function GeneralInputModal({ title, placeholder, value, onChange, onConfirm, onCancel }) {
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={onCancel}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm flex flex-col gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-bold text-slate-800">{title}</h3>
                     <button onClick={onCancel} className="text-slate-400 hover:text-slate-600"><Icon d={PATHS.Close} className="w-5 h-5" /></button>
                 </div>
-                <input autoFocus value={value} onChange={e => onChange(e.target.value)} className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder={placeholder} onKeyDown={e => e.key === 'Enter' && onConfirm()} />
+                <input autoFocus value={value} onChange={e => onChange(e.target.value)} className="w-full border border-zinc-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-zinc-300 focus:border-transparent transition" placeholder={placeholder} onKeyDown={e => e.key === 'Enter' && onConfirm()} />
                 <div className="flex gap-3 mt-2">
-                    <button onClick={onCancel} className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-200 transition">取消</button>
-                    <button onClick={onConfirm} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">确定</button>
+                    <button onClick={onCancel} className="flex-1 bg-zinc-100 text-zinc-600 py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-200 transition">取消</button>
+                    <button onClick={onConfirm} className="flex-1 bg-zinc-800 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-900 transition">确定</button>
                 </div>
             </div>
         </div>
@@ -178,8 +174,8 @@ function GeneralInputModal({ title, placeholder, value, onChange, onConfirm, onC
 function GeneralConfirmModal({ title, message, onConfirm, onCancel, confirmText = "确认", cancelText = "取消", type = "danger" }) {
     return (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={onCancel}>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${type === 'danger' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
+            <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xs text-center flex flex-col items-center gap-4 transform transition-all scale-100" onClick={e => e.stopPropagation()}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${type === 'danger' ? 'bg-red-100 text-red-500' : 'bg-zinc-100 text-zinc-500'}`}>
                     <Icon d={type === 'danger' ? PATHS.Trash : PATHS.Check} className="w-6 h-6" />
                 </div>
                 <div>
@@ -187,8 +183,8 @@ function GeneralConfirmModal({ title, message, onConfirm, onCancel, confirmText 
                     <p className="text-sm text-slate-500 mt-1">{message}</p>
                 </div>
                 <div className="flex gap-3 w-full">
-                    <button onClick={onCancel} className="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-200 transition">{cancelText}</button>
-                    <button onClick={onConfirm} className={`flex-1 text-white py-2.5 rounded-xl font-bold text-sm shadow-md transition ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}>{confirmText}</button>
+                    <button onClick={onCancel} className="flex-1 bg-zinc-100 text-zinc-600 py-2.5 rounded-lg font-bold text-sm hover:bg-zinc-200 transition">{cancelText}</button>
+                    <button onClick={onConfirm} className={`flex-1 text-white py-2.5 rounded-lg font-bold text-sm transition ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{confirmText}</button>
                 </div>
             </div>
         </div>
@@ -198,7 +194,7 @@ function GeneralConfirmModal({ title, message, onConfirm, onCancel, confirmText 
 const ChatMessage = React.memo(({ msg, idx, activeMsgIndex, feedbackState, correctionText, setCorrectionText, submitCorrectionMsg, setActiveMsgIndex, setFeedbackState, handleLikeMsg, handleDislikeMsg, openSmartOptModal, handleCopy }) => {
     return (
         <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} fade-in group`}>
-            <div className={`p-3 rounded-2xl max-w-[90%] text-sm leading-relaxed shadow-sm hover-lift ${msg.role === 'user' ? 'bg-blue-50 text-blue-900 border border-blue-100 rounded-tr-sm' : 'glass-panel border border-slate-200 text-slate-800 rounded-tl-sm'}`}>
+            <div className={`p-3 max-w-[90%] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-zinc-900 text-white rounded-2xl rounded-tr-sm' : 'bg-white border border-zinc-100 text-zinc-800 rounded-2xl rounded-tl-sm shadow-sm'}`}>
                 {msg.displayImages && msg.displayImages.length > 0 && (
                     <div className="flex gap-2 mb-2 flex-wrap">
                         {msg.displayImages.map((img, i) => <img key={i} src={img.previewUrl} className="max-h-40 rounded-lg border border-slate-200 shadow-sm" alt="Pasted" />)}

@@ -810,9 +810,9 @@ function App() {
         {showScriptModal && (
             <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={cancelEdit}>
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col transform transition-all scale-100 overflow-hidden max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                    <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+                    <div className="p-4 border-b flex justify-between items-center bg-zinc-50">
                         <span className="font-bold text-slate-700 flex items-center gap-2">
-                            <Icon d={PATHS.Edit} className="w-5 h-5 text-blue-600"/>
+                            <Icon d={PATHS.Edit} className="w-5 h-5 text-zinc-700"/>
                             {scriptForm.id.startsWith('new_') ? '新增话术' : '编辑话术'}
                         </span>
                         <button onClick={cancelEdit} className="text-slate-400 hover:text-slate-600"><Icon d={PATHS.Close} className="w-5 h-5"/></button>
@@ -822,24 +822,24 @@ function App() {
                             <div className="flex-1 relative">
                                 <label className="block text-xs font-bold text-slate-500 mb-1">分类 (必填)</label>
                                 <div className="relative">
-                                    <input list="category-options" value={scriptForm.category} onChange={e => setScriptForm({...scriptForm, category: e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100" placeholder="选择或输入"/>
+                                    <input list="category-options" value={scriptForm.category} onChange={e => setScriptForm({...scriptForm, category: e.target.value})} className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200" placeholder="选择或输入"/>
                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><Icon d={PATHS.ChevronDown} className="w-4 h-4"/></div>
                                 </div>
                                 <datalist id="category-options">{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
                             </div>
                             <div className="flex-[2]">
                                 <label className="block text-xs font-bold text-slate-500 mb-1">关键字 (用于搜索)</label>
-                                <input value={scriptForm.keywords} onChange={e => setScriptForm({...scriptForm, keywords: e.target.value})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100" placeholder="多个关键词用空格隔开"/>
+                                <input value={scriptForm.keywords} onChange={e => setScriptForm({...scriptForm, keywords: e.target.value})} className="w-full border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200" placeholder="多个关键词用空格隔开"/>
                             </div>
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">话术内容</label>
-                            <textarea value={scriptForm.content} onChange={e => setScriptForm({...scriptForm, content: e.target.value})} className="w-full h-40 border border-slate-200 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-blue-100 resize-none custom-scrollbar" placeholder="输入具体的话术内容..."></textarea>
+                            <textarea value={scriptForm.content} onChange={e => setScriptForm({...scriptForm, content: e.target.value})} className="w-full h-40 border border-zinc-200 rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-zinc-200 resize-none custom-scrollbar" placeholder="输入具体的话术内容..."></textarea>
                         </div>
                     </div>
-                    <div className="p-4 border-t bg-slate-50 flex justify-end gap-2">
+                    <div className="p-4 border-t bg-zinc-50 flex justify-end gap-2">
                         <button onClick={cancelEdit} className="px-4 py-2 rounded-lg text-slate-600 font-bold text-sm hover:bg-slate-200 transition">取消</button>
-                        <button onClick={handleSaveScript} disabled={saveStatus === 'saving'} className="px-6 py-2 rounded-lg bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition shadow-md disabled:opacity-50">{saveStatus === 'saving' ? '保存中...' : '保存'}</button>
+                        <button onClick={handleSaveScript} disabled={saveStatus === 'saving'} className="px-6 py-2 rounded-lg bg-zinc-800 text-white font-medium hover:bg-zinc-900 transition disabled:opacity-50">{saveStatus === 'saving' ? '保存中...' : '保存'}</button>
                     </div>
                 </div>
             </div>
@@ -856,7 +856,7 @@ function App() {
                       <button onClick={() => setShowSmartOptModal(false)} className="text-slate-400 hover:text-slate-600"><Icon d={PATHS.Close} className="w-5 h-5"/></button>
                   </div>
                   
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs text-slate-500">
+                  <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-100 text-xs text-slate-500">
                       <span className="font-bold text-slate-700">当前追问内容：</span>
                       <div className="truncate text-red-500 mt-1">A: {(activeMsgIndex >= 0 && chatHistory[activeMsgIndex] ? (chatHistory[activeMsgIndex].displayContent || chatHistory[activeMsgIndex].content) : aiReply).substring(0, 50)}...</div>
                   </div>
@@ -876,8 +876,8 @@ function App() {
                                   onClick={() => setSmartOptTarget(opt.id)}
                                   className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-[10px] font-bold gap-1 ${
                                       smartOptTarget === opt.id 
-                                      ? 'bg-purple-600 text-white border-purple-600 shadow-md transform scale-105' 
-                                      : 'bg-white text-slate-500 border-slate-200 hover:bg-purple-50 hover:border-purple-200'
+                                      ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm'
+                                      : 'bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300'
                                   }`}
                               >
                                   <Icon d={opt.icon} className="w-4 h-4"/>
@@ -891,7 +891,7 @@ function App() {
                           autoFocus
                           value={smartOptReason}
                           onChange={e => setSmartOptReason(e.target.value)}
-                          className="w-full border border-purple-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm min-h-[100px] resize-none bg-purple-50/30"
+                          className="w-full border border-zinc-200 rounded-lg outline-none focus:ring-2 focus:ring-zinc-300 focus:border-transparent transition text-sm min-h-[100px] resize-none bg-zinc-50"
                           placeholder="例如：不要说'搞一下'，太不专业了。或者：串关输半公式不对，应该是0.5..."
                       />
                   </div>
@@ -927,26 +927,26 @@ function App() {
         {showAccountModal && (
             <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 fade-in" onClick={() => setShowAccountModal(false)}>
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col transform transition-all scale-100 overflow-hidden" onClick={e => e.stopPropagation()}>
-                    <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+                    <div className="p-4 border-b flex justify-between items-center bg-zinc-50">
                         <span className="font-bold text-slate-700">{accountForm.id ? '编辑账号' : '新增账号'}</span>
                         <button onClick={() => setShowAccountModal(false)} className="text-slate-400 hover:text-slate-600"><Icon d={PATHS.Close} className="w-5 h-5"/></button>
                     </div>
                     <div className="p-4 flex flex-col gap-3">
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">用户名 (作为登录账号)</label>
-                            <input value={accountForm.username} onChange={e => setAccountForm({...accountForm, username: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100" />
+                            <input value={accountForm.username} onChange={e => setAccountForm({...accountForm, username: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200" />
                         </div>
                         <div className="flex gap-3">
                             <div className="flex-1">
                                 <label className="block text-xs font-bold text-slate-500 mb-1">角色</label>
-                                <select value={accountForm.role} onChange={e => setAccountForm({...accountForm, role: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100">
+                                <select value={accountForm.role} onChange={e => setAccountForm({...accountForm, role: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200">
                                     <option value="user">普通用户</option>
                                     <option value="admin">管理员 (admin)</option>
                                 </select>
                             </div>
                             <div className="flex-1">
                                 <label className="block text-xs font-bold text-slate-500 mb-1">状态</label>
-                                <select value={accountForm.active ? 'true' : 'false'} onChange={e => setAccountForm({...accountForm, active: e.target.value === 'true'})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100">
+                                <select value={accountForm.active ? 'true' : 'false'} onChange={e => setAccountForm({...accountForm, active: e.target.value === 'true'})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200">
                                     <option value="true">激活</option>
                                     <option value="false">禁用</option>
                                 </select>
@@ -954,14 +954,14 @@ function App() {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">OTP 密钥 (Base32, 选填)</label>
-                            <input value={accountForm.secret || ''} onChange={e => setAccountForm({...accountForm, secret: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100 font-mono" placeholder="留空则仅用户名明文登录" />
+                            <input value={accountForm.secret || ''} onChange={e => setAccountForm({...accountForm, secret: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200 font-mono" placeholder="留空则仅用户名明文登录" />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">备注</label>
-                            <input value={accountForm.note || ''} onChange={e => setAccountForm({...accountForm, note: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100" />
+                            <input value={accountForm.note || ''} onChange={e => setAccountForm({...accountForm, note: e.target.value})} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-200" />
                         </div>
                     </div>
-                    <div className="p-4 border-t bg-slate-50 flex justify-end gap-2">
+                    <div className="p-4 border-t bg-zinc-50 flex justify-end gap-2">
                         <button onClick={() => setShowAccountModal(false)} className="px-4 py-2 rounded-lg text-slate-600 font-bold text-sm hover:bg-slate-200 transition">取消</button>
                         <button onClick={handleSaveAccount} className="px-6 py-2 rounded-lg bg-slate-800 text-white font-bold text-sm hover:bg-slate-900 transition shadow-md">保存</button>
                     </div>
@@ -978,7 +978,7 @@ function App() {
                       <button onClick={() => setShowImageModal(false)} className="text-slate-400 hover:text-slate-600"><Icon d={PATHS.Close} className="w-5 h-5"/></button>
                   </div>
                   <div className="flex flex-col gap-3">
-                       <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition min-h-[120px]" onClick={() => fileInputRef.current?.click()}>
+                       <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-50 transition min-h-[120px]" onClick={() => fileInputRef.current?.click()}>
                            {imageForm.preview ? (
                                <img src={imageForm.preview} className="max-h-32 object-contain rounded" />
                            ) : (
@@ -1008,7 +1008,7 @@ function App() {
                <div className="mt-4 bg-white/10 border border-white/10 backdrop-blur text-white px-6 py-3 rounded-2xl text-sm flex flex-col items-center gap-2 shadow-2xl" onClick={e => e.stopPropagation()}>
                    <span className="font-bold text-blue-200 text-lg">{viewImage.title || '未命名图片'}</span>
                    <div className="flex gap-2">
-                       <button onClick={() => { handleCopy(viewImage.title); }} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                       <button onClick={() => { handleCopy(viewImage.title); }} className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
                            <Icon d={PATHS.Copy} className="w-3 h-3" /> 复制快捷
                        </button>
                    </div>
@@ -1034,38 +1034,38 @@ function App() {
             <NotificationModal title="权限不足" message="您当前是普通用户，无权执行此修改/删除操作。请联系管理员。" type="error" onClose={() => setShowPermissionModal(false)} />
         )}
 
-        <header className="bg-white text-slate-800 px-3 py-2 flex justify-between items-center shadow-sm border-b border-slate-200 z-20 shrink-0">
-          <div className="flex items-center gap-2 overflow-hidden"><h1 className="font-bold text-base md:text-lg flex items-center gap-2 tracking-wide text-slate-800 shrink-0"><img src="https://lh3.googleusercontent.com/d/1Rri7vVK9YyhQEdqzvgmjQ4kzNZdbQuxV" alt="Logo" className="w-8 h-8 object-contain" onError={(e)=>{e.target.src="https://via.placeholder.com/64?text=Cat"}} /><span className="hidden xs:inline">哈基米 Pro Max Full</span></h1><div className="flex bg-slate-100 rounded-lg p-1 gap-0.5 overflow-x-auto no-scrollbar max-w-[220px] md:max-w-none"><button onClick={() => setActiveTab('scripts')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'scripts' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}>话术对话</button><button onClick={() => setActiveTab('images')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'images' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}>图片</button><button onClick={() => setActiveTab('notice')} className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'notice' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200'}`}>公告</button></div></div>
+        <header className="bg-white border-b border-zinc-100 px-3 py-2 flex justify-between items-center z-20 shrink-0">
+          <div className="flex items-center gap-2 overflow-hidden"><h1 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 shrink-0"><img src="https://lh3.googleusercontent.com/d/1Rri7vVK9YyhQEdqzvgmjQ4kzNZdbQuxV" alt="Logo" className="w-7 h-7 object-contain" onError={(e)=>{e.target.src="https://via.placeholder.com/64?text=Cat"}} /><span className="hidden xs:inline">哈基米助手</span></h1><div className="flex bg-zinc-100 rounded-lg p-0.5 gap-0.5 overflow-x-auto no-scrollbar max-w-[220px] md:max-w-none"><button onClick={() => setActiveTab('scripts')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'scripts' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>话术对话</button><button onClick={() => setActiveTab('images')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'images' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>图片</button><button onClick={() => setActiveTab('notice')} className={`px-3 py-1.5 text-xs rounded-md transition-all whitespace-nowrap ${activeTab === 'notice' ? 'bg-white text-zinc-900 shadow-sm font-semibold' : 'text-zinc-500 hover:text-zinc-700'}`}>公告</button></div></div>
           <div className="flex items-center gap-2">
-              {currentUser && (<div className={`user-badge hidden md:flex ${userRole === 'admin' ? 'admin' : 'bg-slate-100 border-slate-200 text-slate-600'}`}><div className={`user-avatar ${userRole === 'admin' ? 'bg-amber-500 text-white' : 'bg-slate-300 text-white'}`}><Icon d={userRole === 'admin' ? PATHS.Shield : PATHS.User} className="w-3 h-3"/></div><span>{currentUser}</span>{userRole === 'admin' && <span className="ml-1 text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full border border-amber-200 font-bold">ADMIN</span>}</div>)}
-              
+              {currentUser && (<div className={`user-badge hidden md:flex ${userRole === 'admin' ? 'admin' : 'bg-slate-100 border-zinc-200 text-slate-600'}`}><div className={`user-avatar ${userRole === 'admin' ? 'bg-zinc-700 text-white' : 'bg-zinc-300 text-white'}`}><Icon d={userRole === 'admin' ? PATHS.Shield : PATHS.User} className="w-3 h-3"/></div><span>{currentUser}</span>{userRole === 'admin' && <span className="ml-1 text-[9px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full border border-zinc-300 font-bold">管理员</span>}</div>)}
+
               {/* 仅 aratakito 管理员可见账号管理 */}
               {currentUser === 'aratakito' && userRole === 'admin' && (
-                  <button onClick={() => { setActiveTab('accounts'); fetchAccounts(); }} className={`btn-update-rules hidden md:flex ${activeTab === 'accounts' ? '!bg-slate-800' : 'bg-pink-600 hover:bg-pink-700'}`}>
+                  <button onClick={() => { setActiveTab('accounts'); fetchAccounts(); }} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'accounts' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}>
                       <Icon d={PATHS.User} className="w-3 h-3"/> <span>账号</span>
                   </button>
               )}
 
-              <button onClick={handleDownloadBackup} className="btn-update-rules bg-emerald-600 hover:bg-emerald-700 hidden md:flex"><Icon d={PATHS.Download} className="w-3 h-3"/> <span>数据备份</span></button>
-              {userRole === 'admin' && <button onClick={() => setActiveTab('data_management')} className={`btn-update-rules hidden md:flex ${activeTab === 'data_management' ? '!bg-slate-800' : 'bg-amber-600 hover:bg-amber-700'}`}><Icon d={PATHS.Database} className="w-3 h-3"/> <span>数据管理</span></button>}
-              
-              <button onClick={() => { setShowTrackerModal(true); setHasUnreadUpdates(false); }} className="btn-update-rules relative bg-indigo-500 hover:bg-indigo-600 flex">
-                  <Icon d={PATHS.Eye} className="w-3 h-3"/> <span className="ml-1">监控</span>
+              <button onClick={handleDownloadBackup} className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-md transition-colors border border-transparent hover:border-zinc-200 flex items-center gap-1.5 hidden md:flex"><Icon d={PATHS.Download} className="w-3 h-3"/> <span>数据备份</span></button>
+              {userRole === 'admin' && <button onClick={() => setActiveTab('data_management')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'data_management' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Database} className="w-3 h-3"/> <span>数据管理</span></button>}
+
+              <button onClick={() => { setShowTrackerModal(true); setHasUnreadUpdates(false); }} className="text-xs font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-md transition-colors border border-transparent hover:border-zinc-200 flex items-center gap-1.5 relative">
+                  <Icon d={PATHS.Eye} className="w-3 h-3"/> <span>监控</span>
                   {hasUnreadUpdates && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>}
               </button>
 
-              <button onClick={() => setActiveTab('training')} className={`btn-update-rules hidden md:flex ${activeTab === 'training' ? '!bg-slate-800' : 'bg-indigo-600 hover:bg-indigo-700'}`}><Icon d={PATHS.Brain} className="w-3 h-3"/> <span>更新AI</span></button>
-              {userRole === 'admin' && (<button onClick={() => setActiveTab('bets')} className={`btn-update-rules hidden md:flex ${activeTab === 'bets' ? '!bg-slate-800' : 'bg-cyan-600 hover:bg-cyan-700'}`}><Icon d={PATHS.Search} className="w-3 h-3"/> <span>注单</span></button>)}
-              {userRole === 'admin' && lastDebugInfo && <button onClick={() => setShowDebugModal(true)} className="btn-icon-only text-indigo-500 hover:bg-indigo-50" title="查看调试信息"><Icon d={PATHS.Bug} className="w-5 h-5"/></button>}
-              <button onClick={handleLogout} className="btn-icon-only md:hidden"><Icon d={PATHS.Close} className="w-5 h-5"/></button><button onClick={handleLogout} className="text-xs text-slate-400 hover:text-red-500 underline hidden md:block">退出</button><button onClick={fetchData} className="btn-icon-only hover:bg-slate-100 rounded-full">{loading ? <div className="spinner" style={{width:18, height:18, borderWidth:2}}></div> : <Icon d={PATHS.Refresh} className="w-5 h-5"/>}</button></div>
+              <button onClick={() => setActiveTab('training')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'training' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Brain} className="w-3 h-3"/> <span>更新AI</span></button>
+              {userRole === 'admin' && (<button onClick={() => setActiveTab('bets')} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors border flex items-center gap-1.5 hidden md:flex ${activeTab === 'bets' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200'}`}><Icon d={PATHS.Search} className="w-3 h-3"/> <span>注单</span></button>)}
+              {userRole === 'admin' && lastDebugInfo && <button onClick={() => setShowDebugModal(true)} className="btn-icon-only text-zinc-500 hover:bg-zinc-100" title="查看调试信息"><Icon d={PATHS.Bug} className="w-5 h-5"/></button>}
+              <button onClick={handleLogout} className="btn-icon-only md:hidden"><Icon d={PATHS.Close} className="w-5 h-5"/></button><button onClick={handleLogout} className="text-xs text-zinc-400 hover:text-red-500 underline hidden md:block">退出</button><button onClick={fetchData} className="btn-icon-only hover:bg-zinc-100 rounded-full">{loading ? <div className="spinner" style={{width:18, height:18, borderWidth:2}}></div> : <Icon d={PATHS.Refresh} className="w-5 h-5"/>}</button></div>
         </header>
         
-         <main className="relative flex-1 overflow-hidden bg-slate-50">
+         <main className="relative flex-1 overflow-hidden bg-zinc-50">
            
            {/* ===== 账号管理模块 (仅 aratakito) ===== */}
            {activeTab === 'accounts' && currentUser === 'aratakito' && (
-               <div className="absolute inset-0 flex flex-col bg-slate-50 overflow-hidden z-30">
-                   <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
+               <div className="absolute inset-0 flex flex-col bg-zinc-50 overflow-hidden z-30">
+                   <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
                        <span className="font-bold text-slate-700 flex items-center gap-2"><Icon d={PATHS.User} className="w-5 h-5 text-pink-500"/> 账号管理</span>
                        <div className="flex gap-2">
                            <button onClick={() => {setAccountForm({ id: null, username: '', role: 'user', secret: '', active: true, note: '' }); setShowAccountModal(true);}} className="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-900 transition">新增账号</button>
@@ -1074,7 +1074,7 @@ function App() {
                    </div>
                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                        <table className="w-full text-left border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
-                           <thead className="bg-slate-100 text-slate-500 text-xs">
+                           <thead className="bg-zinc-50 text-zinc-500 text-xs">
                                <tr>
                                    <th className="p-3 font-bold">用户名 (登录名)</th>
                                    <th className="p-3 font-bold">角色</th>
@@ -1085,10 +1085,10 @@ function App() {
                            </thead>
                            <tbody>
                                {accounts.map(acc => (
-                                   <tr key={acc.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                   <tr key={acc.id} className="border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
                                        <td className="p-3 font-bold text-slate-700">{acc.username || '-'}</td>
                                        <td className="p-3">
-                                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${acc.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>{acc.role}</span>
+                                           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${acc.role === 'admin' ? 'bg-zinc-100 text-zinc-600' : 'bg-slate-100 text-slate-600'}`}>{acc.role}</span>
                                        </td>
                                        <td className="p-3">
                                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${acc.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{acc.active ? '激活' : '禁用'}</span>
@@ -1110,43 +1110,43 @@ function App() {
            {/* ===== 公告管理模块 ===== */}
            {activeTab === 'notice' && (
             <div className="absolute inset-0 flex flex-col">
-              <div className="bg-white border-b border-slate-100 px-4 py-1 flex items-center justify-end shrink-0"><button onClick={() => setIsTemplateMode(!isTemplateMode)} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-slate-100 text-slate-500 hover:bg-slate-200"><Icon d={isTemplateMode ? PATHS.Magic : PATHS.Save} className="w-3 h-3"/>{isTemplateMode ? '返回生成模式' : '进入模板管理'}</button></div>
+              <div className="bg-white border-b border-zinc-100 px-4 py-1 flex items-center justify-end shrink-0"><button onClick={() => setIsTemplateMode(!isTemplateMode)} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-zinc-100 text-zinc-500 hover:bg-zinc-200"><Icon d={isTemplateMode ? PATHS.Magic : PATHS.Save} className="w-3 h-3"/>{isTemplateMode ? '返回生成模式' : '进入模板管理'}</button></div>
               {!isTemplateMode ? (
-                  <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 bg-slate-50 overflow-y-auto md:overflow-hidden">
+                  <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 bg-zinc-50 overflow-y-auto md:overflow-hidden">
                       <div className="w-full md:w-1/4 flex flex-col gap-3 shrink-0">
-                          <div className="bg-white rounded-xl shadow-sm border border-slate-200 px-3 py-2 flex items-center gap-2"><Icon d={PATHS.Magic} className={`w-4 h-4 ${selectedGenTemplateId ? 'text-slate-400' : 'text-purple-500'}`}/>
+                          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 px-3 py-2 flex items-center gap-2"><Icon d={PATHS.Magic} className={`w-4 h-4 ${selectedGenTemplateId ? 'text-slate-400' : 'text-purple-500'}`}/>
                               <select value={selectedGenTemplateId} onChange={(e) => { setSelectedGenTemplateId(e.target.value); if(e.target.value) { const t = allTemplates.find(x => x.id === e.target.value); if(t) setViewTemplate(t); } else { setViewTemplate(null); } }} className="flex-1 bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"> <option value="">🤖 AI 自动匹配模板</option> {allTemplates.map(t => ( <option key={t.id} value={t.id}>📄 {t.type}</option> ))} </select>
                               {selectedGenTemplateId && ( <button onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); }} className="text-slate-400 hover:text-red-500"> <Icon d={PATHS.Close} className="w-4 h-4"/> </button> )}
                           </div>
-                          <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[120px] md:h-2/3"><div className="p-3 border-b bg-slate-50 font-bold text-slate-600 text-xs flex items-center gap-2"><Icon d={PATHS.Edit} className="text-purple-500"/> 原始通知</div><textarea className="flex-1 p-3 text-sm outline-none resize-none bg-slate-50/30 placeholder:text-slate-300 min-h-[100px]" placeholder="粘贴运营商通知..." value={rawNotice} onChange={e => setRawNotice(e.target.value)}></textarea></div>
+                          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden min-h-[120px] md:h-2/3"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex items-center gap-2"><Icon d={PATHS.Edit} className="text-purple-500"/> 原始通知</div><textarea className="flex-1 p-3 text-sm outline-none resize-none bg-zinc-50/30 placeholder:text-slate-300 min-h-[100px]" placeholder="粘贴运营商通知..." value={rawNotice} onChange={e => setRawNotice(e.target.value)}></textarea></div>
                           <button onClick={handleGenerateNotice} disabled={noticeLoading} className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg text-white font-bold flex flex-row md:flex-col items-center justify-center gap-2 hover:scale-[1.02] transition disabled:opacity-50 py-3 touch-target md:flex-1">{noticeLoading ? <div className="spinner border-white/30 border-t-white" style={{width:20,height:20}}></div> : <><Icon d={PATHS.Magic} className="w-5 h-5 md:w-8 md:h-8"/> <span>{selectedGenTemplateId ? '按模板生成' : '智能生成公告'}</span></>}</button>
                       </div>
                       <div className="flex-1 flex flex-col gap-3">
                           <div className="flex items-center justify-between px-2 text-xs text-slate-400"><span>当前模式: {selectedGenTemplateId ? (allTemplates.find(t=>t.id===selectedGenTemplateId)?.type || '手动模式') : (viewTemplate ? `已选模板 [${viewTemplate.type}]` : '🤖 AI 自动匹配模板')}</span>{viewTemplate && <button onClick={() => { setViewTemplate(null); setSelectedGenTemplateId(''); }} className="text-blue-500 hover:underline">取消选择</button>}</div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">{[{ k: 'front', t: '前台公告' }, { k: 'mail', t: '站内信' }, { k: 'inner', t: '对内公告' }].map(item => (<div key={item.k} className={`bg-white rounded-xl shadow-sm border flex flex-col overflow-hidden min-h-[150px] ${genResult && genResult[item.k] && genResult[item.k].startsWith('❌') ? 'error-result' : 'border-slate-200'}`}><div className="p-3 border-b bg-slate-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>{item.t}</span><button onClick={() => genResult && handleCopy(genResult[item.k])} className="text-blue-500 hover:text-blue-700 text-xs px-2 py-1">复制</button></div><textarea className="notice-textarea" value={genResult ? genResult[item.k] : ''} onChange={(e) => setGenResult({...genResult, [item.k]: e.target.value})} placeholder="等待生成..."></textarea></div>))}</div>
-                          {genResult && (<div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-3"><div className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon d={PATHS.Edit} className="text-orange-500"/> 结果评价</div><div className="flex flex-col md:flex-row gap-2"><button onClick={() => handleAnnFeedback('good')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`flex-1 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_good' ? 'bg-green-500 scale-105 shadow-md' : 'bg-green-600 hover:bg-green-700'}`}>{annSubmitStatus==='success_good' ? '✅ 已学习' : '完美 (Keep)'}</button><div className="flex-1 flex gap-2"><textarea className="flex-1 border rounded-lg p-2 text-xs bg-slate-50 resize-none" placeholder="如有问题，请填写修正原因..." value={annCorrectReason} onChange={e => setAnnCorrectReason(e.target.value)}></textarea><button onClick={() => handleAnnFeedback('bad')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`px-4 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_bad' ? 'bg-blue-500 scale-105 shadow-md' : 'bg-slate-800 hover:bg-black'}`}>{annSubmitStatus==='success_bad' ? '✅ 已学习' : '提交修正'}</button></div></div></div>)}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">{[{ k: 'front', t: '前台公告' }, { k: 'mail', t: '站内信' }, { k: 'inner', t: '对内公告' }].map(item => (<div key={item.k} className={`bg-white rounded-xl shadow-sm border flex flex-col overflow-hidden min-h-[150px] ${genResult && genResult[item.k] && genResult[item.k].startsWith('❌') ? 'error-result' : 'border-zinc-200'}`}><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>{item.t}</span><button onClick={() => genResult && handleCopy(genResult[item.k])} className="text-blue-500 hover:text-blue-700 text-xs px-2 py-1">复制</button></div><textarea className="notice-textarea" value={genResult ? genResult[item.k] : ''} onChange={(e) => setGenResult({...genResult, [item.k]: e.target.value})} placeholder="等待生成..."></textarea></div>))}</div>
+                          {genResult && (<div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-4 flex flex-col gap-3"><div className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon d={PATHS.Edit} className="text-orange-500"/> 结果评价</div><div className="flex flex-col md:flex-row gap-2"><button onClick={() => handleAnnFeedback('good')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`flex-1 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_good' ? 'bg-zinc-500 scale-105' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{annSubmitStatus==='success_good' ? '✅ 已学习' : '完美 (Keep)'}</button><div className="flex-1 flex gap-2"><textarea className="flex-1 border rounded-lg p-2 text-xs bg-zinc-50 resize-none" placeholder="如有问题，请填写修正原因..." value={annCorrectReason} onChange={e => setAnnCorrectReason(e.target.value)}></textarea><button onClick={() => handleAnnFeedback('bad')} disabled={annSubmitStatus.startsWith('success') || annSubmitStatus === 'sending'} className={`px-4 py-2 rounded-lg text-xs font-bold text-white transition-all transform ${annSubmitStatus==='success_bad' ? 'bg-zinc-600 scale-105' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{annSubmitStatus==='success_bad' ? '✅ 已学习' : '提交修正'}</button></div></div></div>)}
                       </div>
                   </div>
               ) : (
                   <div className="flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 flex-1 overflow-hidden">
-                        <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-slate-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>现有模板 ({allTemplates.length})</span><button onClick={fetchTemplates} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Icon d={PATHS.Refresh} className={`w-4 h-4 ${templateLoading?'animate-spin':''}`}/></button></div><div className="flex-1 overflow-y-auto p-2 space-y-2">{allTemplates.map(t => (<div key={t.id} onClick={() => { setViewTemplate(t); setIsEditingTemplate(false); }} className={`p-3 border rounded-lg flex justify-between items-center group cursor-pointer hover:bg-blue-50 transition-colors ${viewTemplate?.id === t.id ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-100' : 'bg-slate-50 border-slate-200'}`}><div className="overflow-hidden"><div className="font-bold text-sm text-slate-700 truncate">{t.type}</div><div className="text-[10px] text-slate-400 truncate">Front: {t.front ? t.front.substring(0, 20)+'...' : '(空)'}</div></div><div className="flex items-center gap-1"><button onClick={(e) => { e.stopPropagation(); setTemplateForm(t); setIsEditingTemplate(true); setViewTemplate(t); }} className="text-slate-400 hover:text-blue-500 p-2" title="编辑"><Icon d={PATHS.Edit} className="w-4 h-4"/></button>{userRole === 'admin' && <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }} className="text-slate-400 hover:text-red-500 p-2" title="删除"><Icon d={PATHS.Trash} className="w-4 h-4"/></button>}</div></div>))}</div></div>
-                      <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-slate-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span className="flex items-center gap-2">{isEditingTemplate ? '✏️ 编辑模板' : (viewTemplate ? '📄 查看模板' : '✨ 新增/上传模板')} { (isEditingTemplate || viewTemplate) && <button onClick={() => { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setIsEditingTemplate(false); setViewTemplate(null); }} className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] hover:bg-slate-300">重置/新增</button>}</span>{isEditingTemplate || !viewTemplate ? <button onClick={handleSaveTemplate} disabled={templateSaveStatus === 'saving'} className={`px-4 py-1.5 rounded text-xs font-bold text-white transition-colors ${templateSaveStatus === 'success' ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'}`}>{templateSaveStatus === 'saving' ? '保存中...' : templateSaveStatus === 'success' ? '已保存' : '保存上传'}</button> : null}</div>
+                        <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>现有模板 ({allTemplates.length})</span><button onClick={fetchTemplates} className="text-zinc-700 hover:bg-zinc-50 p-1 rounded"><Icon d={PATHS.Refresh} className={`w-4 h-4 ${templateLoading?'animate-spin':''}`}/></button></div><div className="flex-1 overflow-y-auto p-2 space-y-2">{allTemplates.map(t => (<div key={t.id} onClick={() => { setViewTemplate(t); setIsEditingTemplate(false); }} className={`p-3 border rounded-lg flex justify-between items-center group cursor-pointer hover:bg-zinc-50 transition-colors ${viewTemplate?.id === t.id ? 'bg-zinc-50 border-zinc-800 ring-1 ring-zinc-200' : 'bg-zinc-50 border-zinc-200'}`}><div className="overflow-hidden"><div className="font-bold text-sm text-slate-700 truncate">{t.type}</div><div className="text-[10px] text-slate-400 truncate">Front: {t.front ? t.front.substring(0, 20)+'...' : '(空)'}</div></div><div className="flex items-center gap-1"><button onClick={(e) => { e.stopPropagation(); setTemplateForm(t); setIsEditingTemplate(true); setViewTemplate(t); }} className="text-slate-400 hover:text-zinc-800 p-2" title="编辑"><Icon d={PATHS.Edit} className="w-4 h-4"/></button>{userRole === 'admin' && <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }} className="text-slate-400 hover:text-red-500 p-2" title="删除"><Icon d={PATHS.Trash} className="w-4 h-4"/></button>}</div></div>))}</div></div>
+                      <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span className="flex items-center gap-2">{isEditingTemplate ? '✏️ 编辑模板' : (viewTemplate ? '📄 查看模板' : '✨ 新增/上传模板')} { (isEditingTemplate || viewTemplate) && <button onClick={() => { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setIsEditingTemplate(false); setViewTemplate(null); }} className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] hover:bg-slate-300">重置/新增</button>}</span>{isEditingTemplate || !viewTemplate ? <button onClick={handleSaveTemplate} disabled={templateSaveStatus === 'saving'} className={`px-4 py-1.5 rounded text-xs font-bold text-white transition-colors ${templateSaveStatus === 'success' ? 'bg-green-500' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{templateSaveStatus === 'saving' ? '保存中...' : templateSaveStatus === 'success' ? '已保存' : '保存上传'}</button> : null}</div>
                       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                           {viewTemplate && !isEditingTemplate ? (
                               <div className="flex flex-col gap-4">
-                                  <div><div className="text-xs font-bold text-slate-500 mb-1">维护类型</div><div className="text-sm text-slate-800 bg-slate-50 p-2 rounded border border-slate-100">{viewTemplate.type}</div></div>
+                                  <div><div className="text-xs font-bold text-slate-500 mb-1">维护类型</div><div className="text-sm text-slate-800 bg-zinc-50 p-2 rounded border border-zinc-100">{viewTemplate.type}</div></div>
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">前台公告</div><div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.front}</div></div>
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">站内信</div><div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.mail}</div></div>
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">对内公告</div><div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.inner}</div></div>
+                                      <div><div className="text-xs font-bold text-slate-500 mb-1">前台公告</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.front}</div></div>
+                                      <div><div className="text-xs font-bold text-slate-500 mb-1">站内信</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.mail}</div></div>
+                                      <div><div className="text-xs font-bold text-slate-500 mb-1">对内公告</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.inner}</div></div>
                                   </div>
                                   <div className="text-center text-xs text-slate-400 mt-4">点击左侧列表的编辑图标 <Icon d={PATHS.Edit} className="w-3 h-3 inline"/> 进入修改模式</div>
                               </div>
                           ) : (
                               <div className="flex flex-col gap-4 h-full">
-                                  <div><label className="block text-xs font-bold text-slate-500 mb-1">维护类型 (Type)</label><input value={templateForm.type} onChange={e => setTemplateForm({...templateForm, type: e.target.value})} className="w-full border border-slate-200 rounded p-2 text-sm outline-none focus:border-blue-400" placeholder="例如：全场馆维护" /></div>
-                                  <div className="bg-blue-50 p-2 rounded border border-blue-100 flex flex-wrap gap-2 items-center">
-                                      <span className="text-[10px] text-blue-600 font-bold mr-1 flex items-center">插入变量:</span>
+                                  <div><label className="block text-xs font-bold text-slate-500 mb-1">维护类型 (Type)</label><input value={templateForm.type} onChange={e => setTemplateForm({...templateForm, type: e.target.value})} className="w-full border border-zinc-200 rounded p-2 text-sm outline-none focus:border-blue-400" placeholder="例如：全场馆维护" /></div>
+                                  <div className="bg-zinc-50 p-2 rounded border border-zinc-200 flex flex-wrap gap-2 items-center">
+                                      <span className="text-[10px] text-zinc-700 font-bold mr-1 flex items-center">插入变量:</span>
                                       {templateVars.map(v => (
                                           <button key={v} onClick={() => insertTemplateVar(v)} className={`var-chip relative group ${usedVariables.includes(v) ? 'used' : ''}`} title="点击插入">
                                               {v}
@@ -1156,9 +1156,9 @@ function App() {
                                       <button onClick={openAddCustomVarModal} className="var-chip add" title="新增自定义变量"><Icon d={PATHS.Plus} className="w-3 h-3 mr-1"/> 新增</button>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">前台公告 (Front)</label><HighlightedTextarea inputRef={frontRef} value={templateForm.front} onFocus={() => setLastFocusedTemplateField('front')} onChange={e => setTemplateForm({...templateForm, front: e.target.value})} className="flex-1 w-full border border-slate-200 rounded text-sm outline-none focus-within:border-blue-400 bg-slate-50 transition overflow-hidden" placeholder="输入前台模板..."/></div>
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">站内信 (Mail)</label><HighlightedTextarea inputRef={mailRef} value={templateForm.mail} onFocus={() => setLastFocusedTemplateField('mail')} onChange={e => setTemplateForm({...templateForm, mail: e.target.value})} className="flex-1 w-full border border-slate-200 rounded text-sm outline-none focus-within:border-blue-400 bg-slate-50 transition overflow-hidden" placeholder="输入站内信模板..."/></div>
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">对内公告 (Inner)</label><HighlightedTextarea inputRef={innerRef} value={templateForm.inner} onFocus={() => setLastFocusedTemplateField('inner')} onChange={e => setTemplateForm({...templateForm, inner: e.target.value})} className="flex-1 w-full border border-slate-200 rounded text-sm outline-none focus-within:border-blue-400 bg-slate-50 transition overflow-hidden" placeholder="输入内部公告模板..."/></div>
+                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">前台公告 (Front)</label><HighlightedTextarea inputRef={frontRef} value={templateForm.front} onFocus={() => setLastFocusedTemplateField('front')} onChange={e => setTemplateForm({...templateForm, front: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入前台模板..."/></div>
+                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">站内信 (Mail)</label><HighlightedTextarea inputRef={mailRef} value={templateForm.mail} onFocus={() => setLastFocusedTemplateField('mail')} onChange={e => setTemplateForm({...templateForm, mail: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入站内信模板..."/></div>
+                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">对内公告 (Inner)</label><HighlightedTextarea inputRef={innerRef} value={templateForm.inner} onFocus={() => setLastFocusedTemplateField('inner')} onChange={e => setTemplateForm({...templateForm, inner: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入内部公告模板..."/></div>
                                   </div>
                               </div>
                           )}
@@ -1171,18 +1171,18 @@ function App() {
           {/* ===== 话术/对话模块 (含多智能体) ===== */}
           {activeTab === 'scripts' && (
              <div className="absolute inset-0 flex flex-col md:flex-row">
-              <section className="w-full md:w-1/3 md:min-w-[320px] bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shadow-lg z-10 shrink-0 h-[40%] md:h-full overflow-hidden">
-                  <div className="p-2 md:p-3 border-b border-slate-100 flex gap-2">
-                      <div className="relative w-1/3 max-w-[120px]"><button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2 pr-8 outline-none focus:ring-2 focus:ring-blue-100 text-left truncate flex items-center justify-between relative"><span className="truncate">{selectedCategory || '全部分类'}</span><div className={`absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`}><Icon d={PATHS.ChevronDown} className="w-3 h-3"/></div></button>{isCategoryOpen && (<><div className="fixed inset-0 z-20" onClick={() => setIsCategoryOpen(false)}></div><div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-100 rounded-lg shadow-xl z-30 max-h-60 overflow-y-auto py-1 custom-scrollbar"><div className={`px-3 py-2 text-xs cursor-pointer transition-colors ${!selectedCategory ? 'text-blue-600 font-bold bg-blue-50' : 'text-slate-600 hover:bg-slate-50'}`} onClick={() => { setSelectedCategory(''); setIsCategoryOpen(false); }}>全部分类</div>{uniqueCategories.map(c => (<div key={c} className={`px-3 py-2 text-xs cursor-pointer truncate transition-colors ${selectedCategory === c ? 'text-blue-600 font-bold bg-blue-50' : 'text-slate-600 hover:bg-slate-50'}`} onClick={() => { setSelectedCategory(c); setIsCategoryOpen(false); }}>{c}</div>))}</div></>)}</div>
-                      <div className="relative flex-1"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search} /></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索话术..." className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all" /></div>
+              <section className="w-full md:w-1/3 md:min-w-[320px] bg-white border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col shadow-lg z-10 shrink-0 h-[40%] md:h-full overflow-hidden">
+                  <div className="p-2 md:p-3 border-b border-zinc-100 flex gap-2">
+                      <div className="relative w-1/3 max-w-[120px]"><button onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full bg-zinc-50 border border-zinc-200 text-slate-700 text-xs rounded-lg px-3 py-2 pr-8 outline-none focus:ring-2 focus:ring-zinc-200 text-left truncate flex items-center justify-between relative"><span className="truncate">{selectedCategory || '全部分类'}</span><div className={`absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`}><Icon d={PATHS.ChevronDown} className="w-3 h-3"/></div></button>{isCategoryOpen && (<><div className="fixed inset-0 z-20" onClick={() => setIsCategoryOpen(false)}></div><div className="absolute top-full left-0 mt-1 w-full bg-white border border-zinc-100 rounded-lg shadow-xl z-30 max-h-60 overflow-y-auto py-1 custom-scrollbar"><div className={`px-3 py-2 text-xs cursor-pointer transition-colors ${!selectedCategory ? 'text-zinc-700 font-bold bg-zinc-50' : 'text-slate-600 hover:bg-zinc-50'}`} onClick={() => { setSelectedCategory(''); setIsCategoryOpen(false); }}>全部分类</div>{uniqueCategories.map(c => (<div key={c} className={`px-3 py-2 text-xs cursor-pointer truncate transition-colors ${selectedCategory === c ? 'text-zinc-700 font-bold bg-zinc-50' : 'text-slate-600 hover:bg-zinc-50'}`} onClick={() => { setSelectedCategory(c); setIsCategoryOpen(false); }}>{c}</div>))}</div></>)}</div>
+                      <div className="relative flex-1"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search} /></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索话术..." className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-zinc-200 focus:border-blue-400 transition-all" /></div>
                       <button onClick={openAddScript} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg">新增</button>
                   </div>
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2 bg-slate-50/30 relative">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-2 bg-zinc-50/30 relative">
                       {scripts.length === 0 && !loading && (<div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs"><Icon d={PATHS.Chat} className="w-8 h-8 mb-2 opacity-50"/>暂无话术数据</div>)}
                       {filteredScripts.map(s => (
-                          <div key={s.id} className={`bg-white p-3 rounded-lg border group relative transition-all active:bg-blue-50 cursor-pointer ${scriptForm.id===s.id ? 'border-orange-400 ring-1 ring-orange-100' : 'border-slate-200'}`} onClick={() => window.innerWidth < 768 ? handleCopyScript(s.content, s.id) : startEdit(s)}>
-                              <div className="flex justify-between mb-1"><span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded uppercase">{s.category}</span><div className="flex gap-2 md:opacity-0 group-hover:opacity-100 transition"><button onClick={(e) => { e.stopPropagation(); handleCopyScript(s.content, s.id); }} className={`p-1 ${copiedScriptId === s.id ? 'text-green-600' : 'text-slate-400'}`}><Icon d={copiedScriptId === s.id ? PATHS.Check : PATHS.Copy}/></button><button onClick={(e) => { e.stopPropagation(); startEdit(s); }} className="p-1 text-slate-400 hover:text-blue-500"><Icon d={PATHS.Edit}/></button><button onClick={(e) => { e.stopPropagation(); handleDelete('script', s); }} className="p-1 text-slate-400 hover:text-red-500"><Icon d={PATHS.Trash}/></button></div></div>
-                              <div className="text-xs text-slate-400 mb-1 truncate font-mono bg-slate-50 px-1 rounded inline-block">Kw: {s.keywords}</div>
+                          <div key={s.id} className={`bg-white p-3 rounded-lg border group relative transition-all active:bg-zinc-50 cursor-pointer ${scriptForm.id===s.id ? 'border-orange-400 ring-1 ring-orange-100' : 'border-zinc-200'}`} onClick={() => window.innerWidth < 768 ? handleCopyScript(s.content, s.id) : startEdit(s)}>
+                              <div className="flex justify-between mb-1"><span className="text-[10px] font-bold bg-zinc-50 text-zinc-700 px-2 py-0.5 rounded uppercase">{s.category}</span><div className="flex gap-2 md:opacity-0 group-hover:opacity-100 transition"><button onClick={(e) => { e.stopPropagation(); handleCopyScript(s.content, s.id); }} className={`p-1 ${copiedScriptId === s.id ? 'text-green-600' : 'text-slate-400'}`}><Icon d={copiedScriptId === s.id ? PATHS.Check : PATHS.Copy}/></button><button onClick={(e) => { e.stopPropagation(); startEdit(s); }} className="p-1 text-slate-400 hover:text-zinc-800"><Icon d={PATHS.Edit}/></button><button onClick={(e) => { e.stopPropagation(); handleDelete('script', s); }} className="p-1 text-slate-400 hover:text-red-500"><Icon d={PATHS.Trash}/></button></div></div>
+                              <div className="text-xs text-slate-400 mb-1 truncate font-mono bg-zinc-50 px-1 rounded inline-block">Kw: {s.keywords}</div>
                               <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words line-clamp-2">{s.content}</div>
                           </div>
                       ))}
@@ -1190,7 +1190,7 @@ function App() {
               </section>
 
               <section className="flex-1 bg-slate-100 p-2 md:p-6 flex flex-col gap-2 md:gap-4 min-h-0 relative">
-                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden relative min-h-[30vh]">
+                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden relative min-h-[30vh]">
                       <div className="flex-1 p-3 md:p-5 overflow-y-auto custom-scrollbar flex flex-col gap-4">
                           {chatHistory.length === 0 ? (
                                <div className="h-full flex flex-col items-center justify-center fade-in text-slate-400">
@@ -1222,9 +1222,9 @@ function App() {
                           {/* 动态加载状态指示器 */}
                           {aiLoading && (
                                <div className="flex justify-start fade-in">
-                                   <div className="p-3 rounded-2xl rounded-tl-sm bg-slate-50 border border-slate-200 text-slate-500 flex items-center gap-2 text-sm shadow-sm">
+                                   <div className="p-3 rounded-2xl rounded-tl-sm bg-zinc-50 border border-zinc-200 text-slate-500 flex items-center gap-2 text-sm shadow-sm">
                                        <div className={`spinner border-slate-300 ${aiPhase === 'triage' ? 'border-t-purple-600' : 'border-t-blue-600'}`} style={{width:16, height:16, borderWidth:2}}></div>
-                                       <span className={aiPhase === 'triage' ? 'text-purple-600 font-bold' : 'text-blue-600 font-bold'}>
+                                       <span className={aiPhase === 'triage' ? 'text-purple-600 font-bold' : 'text-zinc-700 font-bold'}>
                                            {aiPhase === 'triage' ? '分析中...' : '思考中...'}
                                        </span>
                                    </div>
@@ -1234,8 +1234,8 @@ function App() {
                       </div>
                   </div>
 
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 shrink-0 overflow-hidden focus-within:ring-2 ring-blue-100 flex flex-col md:h-auto transition-all">
-                      <div className="px-3 py-2 border-b border-slate-50 bg-slate-50/50 flex items-center justify-between">
+                  <div className="bg-white rounded-xl shadow-sm border border-zinc-200 shrink-0 overflow-hidden focus-within:ring-2 ring-blue-100 flex flex-col md:h-auto transition-all">
+                      <div className="px-3 py-2 border-b border-slate-50 bg-zinc-50/50 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                               <Icon d={PATHS.Bot} className="text-slate-400 w-4 h-4"/>
                               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">双智能体输入区 (支持多模态粘贴)</span>
@@ -1248,10 +1248,10 @@ function App() {
                       </div>
                       
                       {pastedImages.length > 0 && (
-                          <div className="flex gap-2 p-2 bg-slate-50/50 border-b border-slate-100 overflow-x-auto">
+                          <div className="flex gap-2 p-2 bg-zinc-50/50 border-b border-zinc-100 overflow-x-auto">
                               {pastedImages.map((img, idx) => (
                                   <div key={idx} className="relative w-14 h-14 shrink-0 group">
-                                      <img src={img.previewUrl} className="w-full h-full object-cover rounded border border-slate-200" />
+                                      <img src={img.previewUrl} className="w-full h-full object-cover rounded border border-zinc-200" />
                                       <button onClick={() => setPastedImages(prev => prev.filter((_, i) => i !== idx))} className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition shadow">
                                           <Icon d={PATHS.Close} className="w-3 h-3"/>
                                       </button>
@@ -1270,7 +1270,7 @@ function App() {
                       ></textarea>
                       
                       <div className="px-3 py-2 border-t border-slate-50 flex justify-end bg-white">
-                          <button onClick={handleCallAI} disabled={aiLoading} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 disabled:opacity-50 transition-all transform active:scale-95 flex items-center gap-2 touch-target w-full md:w-auto justify-center" title="快捷键: Ctrl + Enter">
+                          <button onClick={handleCallAI} disabled={aiLoading} className="bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-zinc-900 disabled:opacity-50 transition-all transform active:scale-95 flex items-center gap-2 touch-target w-full md:w-auto justify-center" title="快捷键: Ctrl + Enter">
                               {aiLoading ? '分析中...' : <><Icon d={PATHS.Bot} className="w-4 h-4"/> 发送 <span className="text-[10px] opacity-80 font-normal ml-1">(Ctrl+Enter)</span></>}
                           </button>
                       </div>
@@ -1279,34 +1279,34 @@ function App() {
                   {/* 恢复原位的话术面板覆盖层 */}
                   {showScriptModal && (
                       <div className="absolute inset-0 z-40 bg-white flex flex-col fade-in shadow-xl">
-                          <div className="px-4 py-3 border-b flex justify-between items-center bg-slate-50">
+                          <div className="px-4 py-3 border-b flex justify-between items-center bg-zinc-50">
                               <span className="font-bold text-slate-700 flex items-center gap-2">
-                                  <Icon d={PATHS.Edit} className="w-5 h-5 text-blue-600"/>
+                                  <Icon d={PATHS.Edit} className="w-5 h-5 text-zinc-700"/>
                                   {scriptForm.id.startsWith('new_') ? '✨ 新增话术' : '✏️ 编辑话术'}
                               </span>
                               <div className="flex gap-2">
                                   <button onClick={cancelEdit} className="px-3 py-1.5 rounded-lg text-slate-500 font-bold text-sm hover:bg-slate-200 transition">取消</button>
-                                  <button onClick={handleSaveScript} disabled={saveStatus === 'saving'} className="px-6 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-bold shadow-md hover:bg-blue-700 transition disabled:opacity-50">{saveStatus === 'saving' ? '保存中...' : '保存'}</button>
+                                  <button onClick={handleSaveScript} disabled={saveStatus === 'saving'} className="px-6 py-1.5 rounded-lg bg-zinc-800 text-white text-sm font-bold shadow-md hover:bg-zinc-900 transition disabled:opacity-50">{saveStatus === 'saving' ? '保存中...' : '保存'}</button>
                               </div>
                           </div>
-                          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-slate-50">
+                          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-zinc-50">
                               <div className="flex flex-col md:flex-row gap-4">
                                   <div className="flex-1 relative">
                                       <label className="block text-xs font-bold text-slate-500 mb-1">分类 (必填)</label>
                                       <div className="relative">
-                                          <input list="category-options" value={scriptForm.category} onChange={e => setScriptForm({...scriptForm, category: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white pr-8 transition shadow-sm" placeholder="选择或输入"/>
+                                          <input list="category-options" value={scriptForm.category} onChange={e => setScriptForm({...scriptForm, category: e.target.value})} className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-zinc-200 focus:border-blue-400 bg-white pr-8 transition shadow-sm" placeholder="选择或输入"/>
                                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><Icon d={PATHS.ChevronDown} className="w-4 h-4"/></div>
                                       </div>
                                       <datalist id="category-options">{uniqueCategories.map(c => <option key={c} value={c} />)}</datalist>
                                   </div>
                                   <div className="flex-[2]">
                                       <label className="block text-xs font-bold text-slate-500 mb-1">关键字 (用于搜索)</label>
-                                      <input value={scriptForm.keywords} onChange={e => setScriptForm({...scriptForm, keywords: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white transition shadow-sm" placeholder="多个关键词用空格或逗号隔开"/>
+                                      <input value={scriptForm.keywords} onChange={e => setScriptForm({...scriptForm, keywords: e.target.value})} className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-zinc-200 focus:border-blue-400 bg-white transition shadow-sm" placeholder="多个关键词用空格或逗号隔开"/>
                                   </div>
                               </div>
                               <div className="flex-1 flex flex-col">
                                   <label className="block text-xs font-bold text-slate-500 mb-1">话术内容</label>
-                                  <textarea value={scriptForm.content} onChange={e => setScriptForm({...scriptForm, content: e.target.value})} className="flex-1 w-full border border-slate-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 bg-white resize-none custom-scrollbar transition shadow-sm" placeholder="输入具体的话术内容..."></textarea>
+                                  <textarea value={scriptForm.content} onChange={e => setScriptForm({...scriptForm, content: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded-xl p-4 text-sm outline-none focus:ring-2 focus:ring-zinc-200 focus:border-blue-400 bg-white resize-none custom-scrollbar transition shadow-sm" placeholder="输入具体的话术内容..."></textarea>
                               </div>
                           </div>
                       </div>
@@ -1318,15 +1318,15 @@ function App() {
           {/* ===== 图片管理库 ===== */}
           {activeTab === 'images' && (
             <section className="absolute inset-0 flex flex-col bg-slate-100">
-                <div className="bg-white p-3 md:p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3 items-center shadow-sm z-10 shrink-0">
-                    <div className="relative w-full md:flex-1 md:max-w-xl"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search}/></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索图片..." className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" /></div>
+                <div className="bg-white p-3 md:p-4 border-b border-zinc-200 flex flex-col md:flex-row gap-3 items-center shadow-sm z-10 shrink-0">
+                    <div className="relative w-full md:flex-1 md:max-w-xl"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search}/></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索图片..." className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm outline-none" /></div>
                     <div className="flex w-full md:w-auto items-center gap-2 text-sm justify-between"><button onClick={openAddImage} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg py-2">上传图片</button></div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 md:p-4 relative">
                     {images.length === 0 && !loading && (<div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs"><Icon d={PATHS.Image} className="w-8 h-8 mb-2 opacity-50"/>暂无图片数据</div>)}
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 pb-20 md:pb-0">
                         {filteredImages.map(img => (
-                            <div key={img.id} onClick={() => setViewImage(img)} className="group bg-white rounded-xl border border-slate-200 cursor-pointer shadow-sm active:scale-95 transition-all duration-200 relative overflow-hidden">
+                            <div key={img.id} onClick={() => setViewImage(img)} className="group bg-white rounded-xl border border-zinc-200 cursor-pointer shadow-sm active:scale-95 transition-all duration-200 relative overflow-hidden">
                                 <div className="aspect-video bg-slate-100 flex items-center justify-center relative overflow-hidden"><img src={img.url} className="w-full h-full object-cover"/><button onClick={(e) => { e.stopPropagation(); handleDelete('image', img); }} className="absolute top-1 right-1 bg-black/50 text-white p-1.5 rounded-full md:opacity-0 group-hover:opacity-100 transition backdrop-blur-sm"><Icon d={PATHS.Trash} className="w-4 h-4"/></button></div>
                                 <div className="p-2"><div className="font-bold text-xs truncate text-slate-700">{img.title}</div><div className="text-[10px] text-slate-400 truncate">{img.tags}</div></div>
                             </div>
@@ -1338,14 +1338,14 @@ function App() {
 
           {/* ===== 数据管理模块 ===== */}
           {activeTab === 'data_management' && (
-              <div className="absolute inset-0 flex flex-col bg-slate-50 overflow-hidden z-30">
-                  <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
+              <div className="absolute inset-0 flex flex-col bg-zinc-50 overflow-hidden z-30">
+                  <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
                       <div className="flex gap-2">
-                          <button onClick={() => setDataMgmtTab('chat')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${dataMgmtTab==='chat' ? 'bg-blue-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>客服训练记录 ({chatLogs.length})</button>
-                          <button onClick={() => setDataMgmtTab('ann')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${dataMgmtTab==='ann' ? 'bg-purple-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>公告训练记录 ({annLogs.length})</button>
+                          <button onClick={() => setDataMgmtTab('chat')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${dataMgmtTab==='chat' ? 'bg-zinc-800 text-white shadow' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'}`}>客服训练记录 ({chatLogs.length})</button>
+                          <button onClick={() => setDataMgmtTab('ann')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${dataMgmtTab==='ann' ? 'bg-zinc-900 text-white shadow-sm' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'}`}>公告训练记录 ({annLogs.length})</button>
                       </div>
                       <div className="flex gap-2">
-                          <button onClick={() => setActiveTab('scripts')} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-500 hover:bg-slate-200 transition">关闭</button>
+                          <button onClick={() => setActiveTab('scripts')} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition">关闭</button>
                           <button onClick={fetchTrainingLogs} className="btn-icon-only"><Icon d={PATHS.Refresh} className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}/></button>
                       </div>
                   </div>
@@ -1372,7 +1372,7 @@ function App() {
                                           <div className="flex items-center gap-2"><span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${log.type==='good'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}`}>{log.type.toUpperCase()} CASE</span>{log.user && <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1 font-medium"><Icon d={PATHS.User} className="w-3 h-3"/> {log.user}</span>}</div>
                                           <div className="flex items-center gap-2"><span className="text-[10px] text-slate-400">{log.time}</span><button onClick={() => { setPendingDelete({ type: 'ann_log', id: log.id }); setShowDeleteModal(true); }} className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><Icon d={PATHS.Trash} className="w-4 h-4"/></button></div>
                                       </div>
-                                      <div className="space-y-2 text-sm"><div className="text-xs text-slate-500 bg-slate-50 p-2 rounded truncate">原始: {log.raw}</div>{log.type === 'good' ? (<div className="text-xs text-green-700">✅ 生成结果已采纳</div>) : (<><div className="text-xs text-red-600">❌ 错误生成: {log.wrong_front?.substring(0,50)}...</div><div className="bg-red-50 p-2 rounded text-red-800 text-xs mt-1"><span className="font-bold">否决原因:</span> {log.reason}</div></>)}</div>
+                                      <div className="space-y-2 text-sm"><div className="text-xs text-slate-500 bg-zinc-50 p-2 rounded truncate">原始: {log.raw}</div>{log.type === 'good' ? (<div className="text-xs text-green-700">✅ 生成结果已采纳</div>) : (<><div className="text-xs text-red-600">❌ 错误生成: {log.wrong_front?.substring(0,50)}...</div><div className="bg-red-50 p-2 rounded text-red-800 text-xs mt-1"><span className="font-bold">否决原因:</span> {log.reason}</div></>)}</div>
                                   </div>
                               ))}
                           </div>
@@ -1384,26 +1384,26 @@ function App() {
           {/* ===== 配置设定/AI训练 ===== */}
           {activeTab === 'training' && (
             <div className="absolute inset-0 flex flex-col bg-slate-100 overflow-hidden z-30">
-              <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center shrink-0 shadow-sm z-10"><button onClick={() => setActiveTab('scripts')} className="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-bold"><Icon d={PATHS.ArrowLeft} className="w-4 h-4"/> 返回主页</button></div>
+              <div className="bg-white border-b border-zinc-200 px-4 py-2 flex items-center shrink-0 shadow-sm z-10"><button onClick={() => setActiveTab('scripts')} className="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-bold"><Icon d={PATHS.ArrowLeft} className="w-4 h-4"/> 返回主页</button></div>
               <div className="flex-1 flex flex-col md:flex-row p-4 gap-4 overflow-hidden min-h-0">
-                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-                      <div className="p-3 border-b bg-purple-50 font-bold text-purple-700 text-xs flex justify-between items-center"><span className="flex items-center gap-2"><Icon d={PATHS.Brain}/> 公告生成 AI 设定</span> <div className="flex gap-2"><button onClick={handleResetToDefault} className="bg-slate-100 text-slate-500 px-3 py-1 rounded text-[10px] font-bold hover:bg-slate-200 transition">🔄 重置推荐</button></div></div>
+                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden">
+                      <div className="p-3 border-b bg-zinc-50 font-semibold text-zinc-700 text-xs flex justify-between items-center"><span className="flex items-center gap-2"><Icon d={PATHS.Brain}/> 公告生成 AI 设定</span> <div className="flex gap-2"><button onClick={handleResetToDefault} className="bg-zinc-100 text-zinc-500 px-3 py-1 rounded text-[10px] font-bold hover:bg-slate-200 transition">🔄 重置推荐</button></div></div>
                       <div className="flex-1 flex flex-col p-3 overflow-y-auto gap-3">
                            <div><div className="prompt-label">基础人设 (Base Persona - Fixed)</div><textarea className="prompt-editor" style={{minHeight: '200px'}} value={annBase} onChange={e => setAnnBase(e.target.value)} placeholder="输入公告助手的基础设定..."></textarea></div>
                            <div className="flex-1 flex flex-col"><div className="prompt-label"><span>智能知识库 (Learned Rules - Dynamic)</span> <button onClick={handleTrainAnnouncement} disabled={isAnnTrainingLoading} className="text-purple-600 text-[10px] hover:underline flex items-center gap-1">{isAnnTrainingLoading ? 'AI思考中...' : '🔄 提取训练'}</button></div><textarea className={`prompt-editor flex-1 ${isAnnTrainingLoading ? 'loading' : ''}`} value={annKnowledge} onChange={e => setAnnKnowledge(e.target.value)} placeholder="点击上方“提取训练”按钮，AI将自动从纠错记录中总结规则..." readOnly={isAnnTrainingLoading}></textarea></div>
                       </div>
-                      <div className="p-3 border-t"><button onClick={() => handleSaveCloudPrompts('ann')} disabled={isAnnTrainingLoading} className="w-full bg-green-600 text-white py-2 rounded font-bold text-xs hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"><Icon d={PATHS.Save} className="w-4 h-4"/> 保存公告设定到云端</button></div>
+                      <div className="p-3 border-t"><button onClick={() => handleSaveCloudPrompts('ann')} disabled={isAnnTrainingLoading} className="w-full bg-zinc-800 text-white py-2 rounded font-medium text-xs hover:bg-zinc-900 disabled:opacity-50 flex items-center justify-center gap-2"><Icon d={PATHS.Save} className="w-4 h-4"/> 保存公告设定到云端</button></div>
                   </div>
-                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
-                      <div className="p-3 border-b bg-blue-50 font-bold text-blue-700 text-xs flex justify-between items-center"><span className="flex items-center gap-2"><Icon d={PATHS.Chat}/> 客服回复 AI 设定</span></div>
+                  <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden">
+                      <div className="p-3 border-b bg-zinc-50 font-bold text-blue-700 text-xs flex justify-between items-center"><span className="flex items-center gap-2"><Icon d={PATHS.Chat}/> 客服回复 AI 设定</span></div>
                       <div className="flex-1 flex flex-col p-3 overflow-y-auto gap-3">
                            <div><div className="prompt-label">基础人设 (Base Persona - Fixed)</div><textarea className="prompt-editor" style={{minHeight: '200px'}} value={chatBase} onChange={e => setChatBase(e.target.value)} placeholder="输入客服专家的基础设定..."></textarea></div>
                            <div>
-                              <div className="prompt-label"><span>智能知识库 (Learned Rules - Dynamic)</span> <button onClick={handleTrainChat} disabled={isChatTrainingLoading} className="text-blue-600 text-[10px] hover:underline flex items-center gap-1">{isChatTrainingLoading ? 'AI思考中...' : '🔄 提取训练'}</button></div>
+                              <div className="prompt-label"><span>智能知识库 (Learned Rules - Dynamic)</span> <button onClick={handleTrainChat} disabled={isChatTrainingLoading} className="text-zinc-700 text-[10px] hover:underline flex items-center gap-1">{isChatTrainingLoading ? 'AI思考中...' : '🔄 提取训练'}</button></div>
                               <textarea className={`prompt-editor ${isChatTrainingLoading ? 'loading' : ''}`} style={{minHeight: '120px'}} value={chatKnowledge} onChange={e => setChatKnowledge(e.target.value)} placeholder="点击上方“提取训练”按钮，AI将自动从纠错记录中总结规则..." readOnly={isChatTrainingLoading}></textarea>
                            </div>
                            
-                           <div className="flex-1 flex flex-col mt-3 pt-3 border-t border-slate-100">
+                           <div className="flex-1 flex flex-col mt-3 pt-3 border-t border-zinc-100">
                               <div className="prompt-label text-red-600">
                                   <span>⚖️ 业务硬性逻辑 (Business Hard Rules)</span> 
                                   <span className="text-[10px] font-normal ml-2 text-slate-400">含公告模板、计算公式、风控底线</span>
@@ -1417,7 +1417,7 @@ function App() {
                               ></textarea>
                            </div>
                       </div>
-                      <div className="p-3 border-t"><button onClick={() => handleSaveCloudPrompts('chat')} disabled={isChatTrainingLoading} className="w-full bg-blue-600 text-white py-2 rounded font-bold text-xs hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"><Icon d={PATHS.Save} className="w-4 h-4"/> 保存客服设定到云端</button></div>
+                      <div className="p-3 border-t"><button onClick={() => handleSaveCloudPrompts('chat')} disabled={isChatTrainingLoading} className="w-full bg-zinc-800 text-white py-2 rounded font-bold text-xs hover:bg-zinc-900 disabled:opacity-50 flex items-center justify-center gap-2"><Icon d={PATHS.Save} className="w-4 h-4"/> 保存客服设定到云端</button></div>
                   </div>
               </div>
             </div>
