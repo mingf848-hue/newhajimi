@@ -39,7 +39,8 @@ function App() {
     const [noticeLoading, setNoticeLoading] = useState(false);
     const [annCorrectReason, setAnnCorrectReason] = useState('');
     const [annSubmitStatus, setAnnSubmitStatus] = useState('idle');
-    const [selectedGenTemplateId, setSelectedGenTemplateId] = useState(''); 
+    const [selectedGenTemplateId, setSelectedGenTemplateId] = useState('');
+    const [isTemplateDropOpen, setIsTemplateDropOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState('');
     const [userRole, setUserRole] = useState('user'); 
     const [isTemplateMode, setIsTemplateMode] = useState(false);
@@ -1150,19 +1151,37 @@ function App() {
               {!isTemplateMode ? (
                   <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 notice-wrap overflow-y-auto md:overflow-hidden">
                       <div className="w-full md:w-1/4 flex flex-col gap-3 shrink-0">
-                          <div className={`tpl-select-wrap ${selectedGenTemplateId ? 'is-active' : ''}`}>
+                          <div className={`tpl-select-wrap ${selectedGenTemplateId ? 'is-active' : ''} ${isTemplateDropOpen ? 'is-open' : ''}`}>
                               <div className="tpl-select-icon">
                                 <Icon d={PATHS.Magic} className="w-4 h-4"/>
                               </div>
-                              <select value={selectedGenTemplateId} onChange={(e) => { setSelectedGenTemplateId(e.target.value); if(e.target.value) { const t = allTemplates.find(x => x.id === e.target.value); if(t) setViewTemplate(t); } else { setViewTemplate(null); } }} className="tpl-select">
-                                <option value="">🤖 AI 自动匹配模板</option>
-                                {allTemplates.map(t => ( <option key={t.id} value={t.id}>📄 {t.type}</option> ))}
-                              </select>
+                              <button type="button" onClick={() => setIsTemplateDropOpen(!isTemplateDropOpen)} className="tpl-select-btn">
+                                <span className="truncate">{selectedGenTemplateId ? (allTemplates.find(t=>t.id===selectedGenTemplateId) ? `📄 ${allTemplates.find(t=>t.id===selectedGenTemplateId).type}` : '📄 未知模板') : '🤖 AI 自动匹配模板'}</span>
+                                <Icon d={PATHS.ChevronDown} className={`w-3.5 h-3.5 tpl-select-chevron ${isTemplateDropOpen ? 'is-open' : ''}`}/>
+                              </button>
                               {selectedGenTemplateId && (
                                 <button onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); }} className="tpl-select-clear" title="清除选择">
                                   <Icon d={PATHS.Close} className="w-3.5 h-3.5"/>
                                 </button>
                               )}
+                              {isTemplateDropOpen && (<>
+                                <div className="fixed inset-0 z-30" onClick={() => setIsTemplateDropOpen(false)}></div>
+                                <div className="tpl-dropdown custom-scrollbar">
+                                  <button type="button" onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); setIsTemplateDropOpen(false); }} className={`tpl-dropdown-item ${!selectedGenTemplateId ? 'is-selected' : ''}`}>
+                                    <span className="tpl-dropdown-emoji">🤖</span>
+                                    <span className="flex-1 truncate">AI 自动匹配模板</span>
+                                    {!selectedGenTemplateId && <Icon d={PATHS.Check} className="w-3.5 h-3.5 tpl-dropdown-check"/>}
+                                  </button>
+                                  {allTemplates.length > 0 && <div className="tpl-dropdown-divider"></div>}
+                                  {allTemplates.map(t => (
+                                    <button type="button" key={t.id} onClick={() => { setSelectedGenTemplateId(t.id); setViewTemplate(t); setIsTemplateDropOpen(false); }} className={`tpl-dropdown-item ${selectedGenTemplateId === t.id ? 'is-selected' : ''}`}>
+                                      <span className="tpl-dropdown-emoji">📄</span>
+                                      <span className="flex-1 truncate">{t.type}</span>
+                                      {selectedGenTemplateId === t.id && <Icon d={PATHS.Check} className="w-3.5 h-3.5 tpl-dropdown-check"/>}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>)}
                           </div>
                           <div className="panel flex flex-col overflow-hidden min-h-[120px] md:h-2/3">
                               <div className="panel-head" style={{background:'linear-gradient(180deg,#fdf2f8,#fce7f3)'}}><span className="flex items-center gap-2"><Icon d={PATHS.Edit} className="text-pink-500"/> 原始通知</span></div>
