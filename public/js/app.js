@@ -1195,8 +1195,8 @@ function App() {
                           {chatHistory.length === 0 ? (
                                <div className="h-full flex flex-col items-center justify-center fade-in text-slate-400">
                                    <Icon d={PATHS.Bot} className="w-10 h-10 mb-2 opacity-20"/>
-                                   <span className="text-sm font-bold text-slate-500">双智能体风控模式已启动</span>
-                                   <span className="text-xs mt-1 text-center max-w-xs">支持复杂意图抗干扰测试。<br/>例：我是代存，我怎么被风控了？</span>
+                                   <span className="text-sm font-bold text-slate-500">智能对话助手</span>
+                                   <span className="text-xs mt-1 text-center max-w-xs">开始对话来获得专业的建议和协助<br/>有任何疑问，尽管提问</span>
                                </div>
                           ) : (
                                chatHistory.map((msg, idx) => (
@@ -1225,7 +1225,7 @@ function App() {
                                    <div className="p-3 rounded-2xl rounded-tl-sm bg-slate-50 border border-slate-200 text-slate-500 flex items-center gap-2 text-sm shadow-sm">
                                        <div className={`spinner border-slate-300 ${aiPhase === 'triage' ? 'border-t-purple-600' : 'border-t-blue-600'}`} style={{width:16, height:16, borderWidth:2}}></div>
                                        <span className={aiPhase === 'triage' ? 'text-purple-600 font-bold' : 'text-blue-600 font-bold'}>
-                                           {aiPhase === 'triage' ? '[Agent 1] 意图定性与防雷过滤中...' : '[Agent 2] 推理与话术生成中(gemini-3.1-pro)...'}
+                                           {aiPhase === 'triage' ? '分析中...' : '思考中...'}
                                        </span>
                                    </div>
                                </div>
