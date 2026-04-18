@@ -1137,14 +1137,32 @@ function App() {
            {/* ===== 公告管理模块 ===== */}
            {activeTab === 'notice' && (
             <div className="absolute inset-0 flex flex-col">
-              <div className="bg-white border-b border-zinc-100 px-4 py-1 flex items-center justify-end shrink-0"><button onClick={() => setIsTemplateMode(!isTemplateMode)} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-zinc-100 text-zinc-500 hover:bg-zinc-200"><Icon d={isTemplateMode ? PATHS.Magic : PATHS.Save} className="w-3 h-3"/>{isTemplateMode ? '返回生成模式' : '进入模板管理'}</button></div>
+              <div className="tpl-toggle-bar shrink-0">
+                <div className="flex items-center gap-2 text-xs font-bold" style={{color:'var(--ink-700)'}}>
+                  <span className="dot-grad" style={{width:8,height:8,borderRadius:'50%',background:'var(--brand-grad)'}}></span>
+                  {isTemplateMode ? '模板管理' : '智能公告生成'}
+                </div>
+                <button onClick={() => setIsTemplateMode(!isTemplateMode)} className={`tpl-mode-pill ${isTemplateMode ? 'gen' : 'mng'}`}>
+                  <Icon d={isTemplateMode ? PATHS.Magic : PATHS.Edit} className="w-3.5 h-3.5"/>
+                  {isTemplateMode ? '返回生成模式' : '进入模板管理'}
+                </button>
+              </div>
               {!isTemplateMode ? (
                   <div className="w-full h-full flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 notice-wrap overflow-y-auto md:overflow-hidden">
                       <div className="w-full md:w-1/4 flex flex-col gap-3 shrink-0">
-                          <div className="panel px-3 py-2 flex items-center gap-2">
-                              <Icon d={PATHS.Magic} className={`w-4 h-4 ${selectedGenTemplateId ? 'text-slate-400' : 'text-fuchsia-500'}`}/>
-                              <select value={selectedGenTemplateId} onChange={(e) => { setSelectedGenTemplateId(e.target.value); if(e.target.value) { const t = allTemplates.find(x => x.id === e.target.value); if(t) setViewTemplate(t); } else { setViewTemplate(null); } }} className="flex-1 bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer"> <option value="">🤖 AI 自动匹配模板</option> {allTemplates.map(t => ( <option key={t.id} value={t.id}>📄 {t.type}</option> ))} </select>
-                              {selectedGenTemplateId && ( <button onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); }} className="text-slate-400 hover:text-red-500"> <Icon d={PATHS.Close} className="w-4 h-4"/> </button> )}
+                          <div className={`tpl-select-wrap ${selectedGenTemplateId ? 'is-active' : ''}`}>
+                              <div className="tpl-select-icon">
+                                <Icon d={PATHS.Magic} className="w-4 h-4"/>
+                              </div>
+                              <select value={selectedGenTemplateId} onChange={(e) => { setSelectedGenTemplateId(e.target.value); if(e.target.value) { const t = allTemplates.find(x => x.id === e.target.value); if(t) setViewTemplate(t); } else { setViewTemplate(null); } }} className="tpl-select">
+                                <option value="">🤖 AI 自动匹配模板</option>
+                                {allTemplates.map(t => ( <option key={t.id} value={t.id}>📄 {t.type}</option> ))}
+                              </select>
+                              {selectedGenTemplateId && (
+                                <button onClick={() => { setSelectedGenTemplateId(''); setViewTemplate(null); }} className="tpl-select-clear" title="清除选择">
+                                  <Icon d={PATHS.Close} className="w-3.5 h-3.5"/>
+                                </button>
+                              )}
                           </div>
                           <div className="panel flex flex-col overflow-hidden min-h-[120px] md:h-2/3">
                               <div className="panel-head" style={{background:'linear-gradient(180deg,#fdf2f8,#fce7f3)'}}><span className="flex items-center gap-2"><Icon d={PATHS.Edit} className="text-pink-500"/> 原始通知</span></div>
@@ -1165,37 +1183,85 @@ function App() {
                       </div>
                   </div>
               ) : (
-                  <div className="flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 flex-1 overflow-hidden">
-                        <div className="w-full md:w-1/3 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span>现有模板 ({allTemplates.length})</span><button onClick={fetchTemplates} className="text-zinc-700 hover:bg-zinc-50 p-1 rounded"><Icon d={PATHS.Refresh} className={`w-4 h-4 ${templateLoading?'animate-spin':''}`}/></button></div><div className="flex-1 overflow-y-auto p-2 space-y-2">{allTemplates.map(t => (<div key={t.id} onClick={() => { setViewTemplate(t); setIsEditingTemplate(false); }} className={`p-3 border rounded-lg flex justify-between items-center group cursor-pointer hover:bg-zinc-50 transition-colors ${viewTemplate?.id === t.id ? 'bg-zinc-50 border-zinc-800 ring-1 ring-zinc-200' : 'bg-zinc-50 border-zinc-200'}`}><div className="overflow-hidden"><div className="font-bold text-sm text-slate-700 truncate">{t.type}</div><div className="text-[10px] text-slate-400 truncate">Front: {t.front ? t.front.substring(0, 20)+'...' : '(空)'}</div></div><div className="flex items-center gap-1"><button onClick={(e) => { e.stopPropagation(); setTemplateForm(t); setIsEditingTemplate(true); setViewTemplate(t); }} className="text-slate-400 hover:text-zinc-800 p-2" title="编辑"><Icon d={PATHS.Edit} className="w-4 h-4"/></button>{userRole === 'admin' && <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }} className="text-slate-400 hover:text-red-500 p-2" title="删除"><Icon d={PATHS.Trash} className="w-4 h-4"/></button>}</div></div>))}</div></div>
-                      <div className="flex-1 bg-white rounded-xl shadow-sm border border-zinc-200 flex flex-col overflow-hidden"><div className="p-3 border-b bg-zinc-50 font-bold text-slate-600 text-xs flex justify-between items-center"><span className="flex items-center gap-2">{isEditingTemplate ? '✏️ 编辑模板' : (viewTemplate ? '📄 查看模板' : '✨ 新增/上传模板')} { (isEditingTemplate || viewTemplate) && <button onClick={() => { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setIsEditingTemplate(false); setViewTemplate(null); }} className="bg-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] hover:bg-slate-300">重置/新增</button>}</span>{isEditingTemplate || !viewTemplate ? <button onClick={handleSaveTemplate} disabled={templateSaveStatus === 'saving'} className={`px-4 py-1.5 rounded text-xs font-bold text-white transition-colors ${templateSaveStatus === 'success' ? 'bg-green-500' : 'bg-zinc-800 hover:bg-zinc-900'}`}>{templateSaveStatus === 'saving' ? '保存中...' : templateSaveStatus === 'success' ? '已保存' : '保存上传'}</button> : null}</div>
-                      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row p-3 md:p-6 gap-3 md:gap-6 flex-1 overflow-hidden notice-wrap">
+                        <div className="w-full md:w-1/3 tpl-list-panel min-h-[200px] md:min-h-0">
+                          <div className="tpl-list-head">
+                            <span className="flex items-center gap-2"><Icon d={PATHS.Brain} className="w-4 h-4"/> 模板库 <span className="badge primary">{allTemplates.length}</span></span>
+                            <button onClick={fetchTemplates} className="btn-icon-only" title="刷新"><Icon d={PATHS.Refresh} className={`w-4 h-4 ${templateLoading?'animate-spin':''}`}/></button>
+                          </div>
+                          <div className="tpl-list-body custom-scrollbar">
+                            {allTemplates.length === 0 && (
+                              <div className="tpl-empty">
+                                <div className="tpl-empty-icon"><Icon d={PATHS.Plus} className="w-6 h-6"/></div>
+                                还没有模板，点右侧 <strong>新增</strong> 创建第一个
+                              </div>
+                            )}
+                            {allTemplates.map(t => (
+                              <div key={t.id} onClick={() => { setViewTemplate(t); setIsEditingTemplate(false); }} className={`tpl-card ${viewTemplate?.id === t.id ? 'is-active' : ''}`}>
+                                <div className="overflow-hidden flex-1">
+                                  <div className="tpl-card-title">📄 <span className="truncate">{t.type}</span></div>
+                                  <div className="tpl-card-meta truncate">{t.front ? t.front.substring(0, 28)+'...' : '(空)'}</div>
+                                </div>
+                                <div className="tpl-card-actions">
+                                  <button onClick={(e) => { e.stopPropagation(); setTemplateForm(t); setIsEditingTemplate(true); setViewTemplate(t); }} className="tpl-card-action" title="编辑"><Icon d={PATHS.Edit} className="w-3.5 h-3.5"/></button>
+                                  {userRole === 'admin' && <button onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }} className="tpl-card-action danger" title="删除"><Icon d={PATHS.Trash} className="w-3.5 h-3.5"/></button>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      <div className="tpl-editor">
+                        <div className="tpl-editor-head">
+                          <div className="tpl-editor-title">
+                            <span className="tpl-editor-title-icon"><Icon d={isEditingTemplate ? PATHS.Edit : (viewTemplate ? PATHS.Brain : PATHS.Plus)} className="w-4 h-4"/></span>
+                            {isEditingTemplate ? '编辑模板' : (viewTemplate ? '查看模板' : '新增模板')}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {(isEditingTemplate || viewTemplate) && (
+                              <button onClick={() => { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setIsEditingTemplate(false); setViewTemplate(null); }} className="btn-secondary" style={{padding:'6px 12px', fontSize:'11px'}}>+ 新建</button>
+                            )}
+                            {(isEditingTemplate || !viewTemplate) && (
+                              <button onClick={handleSaveTemplate} disabled={templateSaveStatus === 'saving'} className={`tpl-save-btn ${templateSaveStatus === 'success' ? 'success' : ''}`}>
+                                <Icon d={PATHS.Save} className="w-3.5 h-3.5"/>
+                                {templateSaveStatus === 'saving' ? '保存中...' : templateSaveStatus === 'success' ? '已保存' : '保存到云端'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      <div className="tpl-editor-body custom-scrollbar">
                           {viewTemplate && !isEditingTemplate ? (
                               <div className="flex flex-col gap-4">
-                                  <div><div className="text-xs font-bold text-slate-500 mb-1">维护类型</div><div className="text-sm text-slate-800 bg-zinc-50 p-2 rounded border border-zinc-100">{viewTemplate.type}</div></div>
-                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">前台公告</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.front}</div></div>
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">站内信</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.mail}</div></div>
-                                      <div><div className="text-xs font-bold text-slate-500 mb-1">对内公告</div><div className="text-xs text-slate-600 bg-zinc-50 p-2 rounded border border-zinc-100 whitespace-pre-wrap h-40 overflow-y-auto font-mono">{viewTemplate.inner}</div></div>
+                                  <div>
+                                    <div className="tpl-field-label">维护类型</div>
+                                    <div className="tpl-input" style={{fontWeight:600, color:'var(--ink-900)', cursor:'default'}}>{viewTemplate.type}</div>
                                   </div>
-                                  <div className="text-center text-xs text-slate-400 mt-4">点击左侧列表的编辑图标 <Icon d={PATHS.Edit} className="w-3 h-3 inline"/> 进入修改模式</div>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                      <div className="tpl-preview-card"><div className="tpl-preview-head front"><Icon d={PATHS.Edit} className="w-3 h-3"/>前台公告</div><div className="tpl-preview-body custom-scrollbar">{viewTemplate.front}</div></div>
+                                      <div className="tpl-preview-card"><div className="tpl-preview-head mail"><Icon d={PATHS.Edit} className="w-3 h-3"/>站内信</div><div className="tpl-preview-body custom-scrollbar">{viewTemplate.mail}</div></div>
+                                      <div className="tpl-preview-card"><div className="tpl-preview-head inner"><Icon d={PATHS.Edit} className="w-3 h-3"/>对内公告</div><div className="tpl-preview-body custom-scrollbar">{viewTemplate.inner}</div></div>
+                                  </div>
+                                  <div className="text-center text-xs mt-2" style={{color:'var(--ink-400)'}}>点击左侧列表的 <Icon d={PATHS.Edit} className="w-3 h-3 inline"/> 进入修改模式</div>
                               </div>
                           ) : (
                               <div className="flex flex-col gap-4 h-full">
-                                  <div><label className="block text-xs font-bold text-slate-500 mb-1">维护类型 (Type)</label><input value={templateForm.type} onChange={e => setTemplateForm({...templateForm, type: e.target.value})} className="w-full border border-zinc-200 rounded p-2 text-sm outline-none focus:border-blue-400" placeholder="例如：全场馆维护" /></div>
-                                  <div className="bg-zinc-50 p-2 rounded border border-zinc-200 flex flex-wrap gap-2 items-center">
-                                      <span className="text-[10px] text-zinc-700 font-bold mr-1 flex items-center">插入变量:</span>
+                                  <div>
+                                    <label className="tpl-field-label">维护类型 (Type)</label>
+                                    <input value={templateForm.type} onChange={e => setTemplateForm({...templateForm, type: e.target.value})} className="tpl-input" placeholder="例如：全场馆维护" />
+                                  </div>
+                                  <div className="tpl-var-bar">
+                                      <span className="tpl-var-bar-label"><Icon d={PATHS.Sparkles} className="w-3 h-3"/>插入变量</span>
                                       {templateVars.map(v => (
-                                          <button key={v} onClick={() => insertTemplateVar(v)} className={`var-chip relative group ${usedVariables.includes(v) ? 'used' : ''}`} title="点击插入">
+                                          <button key={v} onClick={() => insertTemplateVar(v)} className={`var-chip ${usedVariables.includes(v) ? 'used' : ''}`} title="点击插入">
                                               {v}
                                               {!INITIAL_VARS.includes(v) && ( <span className="delete-btn" onClick={(e) => handleDeleteVar(e, v)} title="删除变量">✕</span> )}
                                           </button>
                                       ))}
-                                      <button onClick={openAddCustomVarModal} className="var-chip add" title="新增自定义变量"><Icon d={PATHS.Plus} className="w-3 h-3 mr-1"/> 新增</button>
+                                      <button onClick={openAddCustomVarModal} className="var-chip add" title="新增自定义变量"><Icon d={PATHS.Plus} className="w-3 h-3"/> 新增</button>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 min-h-0">
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">前台公告 (Front)</label><HighlightedTextarea inputRef={frontRef} value={templateForm.front} onFocus={() => setLastFocusedTemplateField('front')} onChange={e => setTemplateForm({...templateForm, front: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入前台模板..."/></div>
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">站内信 (Mail)</label><HighlightedTextarea inputRef={mailRef} value={templateForm.mail} onFocus={() => setLastFocusedTemplateField('mail')} onChange={e => setTemplateForm({...templateForm, mail: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入站内信模板..."/></div>
-                                      <div className="flex flex-col gap-1 h-full"><label className="block text-xs font-bold text-slate-500">对内公告 (Inner)</label><HighlightedTextarea inputRef={innerRef} value={templateForm.inner} onFocus={() => setLastFocusedTemplateField('inner')} onChange={e => setTemplateForm({...templateForm, inner: e.target.value})} className="flex-1 w-full border border-zinc-200 rounded text-sm outline-none focus-within:border-blue-400 bg-zinc-50 transition overflow-hidden" placeholder="输入内部公告模板..."/></div>
+                                      <div className="tpl-edit-wrap"><label className="tpl-field-label">前台公告 (Front)</label><div className="tpl-edit-wrap-inner front"><HighlightedTextarea inputRef={frontRef} value={templateForm.front} onFocus={() => setLastFocusedTemplateField('front')} onChange={e => setTemplateForm({...templateForm, front: e.target.value})} className="w-full h-full border-0 outline-none transition" placeholder="输入前台模板..."/></div></div>
+                                      <div className="tpl-edit-wrap"><label className="tpl-field-label">站内信 (Mail)</label><div className="tpl-edit-wrap-inner mail"><HighlightedTextarea inputRef={mailRef} value={templateForm.mail} onFocus={() => setLastFocusedTemplateField('mail')} onChange={e => setTemplateForm({...templateForm, mail: e.target.value})} className="w-full h-full border-0 outline-none transition" placeholder="输入站内信模板..."/></div></div>
+                                      <div className="tpl-edit-wrap"><label className="tpl-field-label">对内公告 (Inner)</label><div className="tpl-edit-wrap-inner inner"><HighlightedTextarea inputRef={innerRef} value={templateForm.inner} onFocus={() => setLastFocusedTemplateField('inner')} onChange={e => setTemplateForm({...templateForm, inner: e.target.value})} className="w-full h-full border-0 outline-none transition" placeholder="输入内部公告模板..."/></div></div>
                                   </div>
                               </div>
                           )}
