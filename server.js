@@ -9,11 +9,10 @@ import mongoose from 'mongoose';
 const PORT = process.env.PORT || 8080;
 // 移除全局的 TARGET_MODEL，改为动态获取
 
-// 缓存状态池（按模型区分，防止 Flash 和 Pro 的缓存互相污染）
+// 缓存状态池（全量统一走 flash-lite，单模型单条记录）
 // 持久化到 Mongo，Zeabur 冷启/重启不丢失，避免每次重启都重建缓存。
 const cachePool = {
-    'gemini-3-flash-preview': { id: null, hash: null, expireTime: null },
-    'gemini-3.1-pro-preview': { id: null, hash: null, expireTime: null }
+    'gemini-3.1-flash-lite-preview': { id: null, hash: null, expireTime: null }
 };
 
 let cacheStore = null;
@@ -207,9 +206,12 @@ app.post('/api/gemini', async (req, res) => {
         if (!API_KEY) return res.status(500).json({ error: "No API Key" });
 
         const { messages, stream, temperature, mode, maxOutputTokens } = req.body;
-        
-        // 🌟 动态模型路由：如果是 think 模式，使用更强大的 3.1-pro-preview
-        const TARGET_MODEL = mode === 'think' ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview';
+
+        // 🌟 全量统一 flash-lite，用 thinking_level 区分档位（彻底不再用 Pro）
+        // - MODE_FAST: thinking_level=low（客服/triage/公告，延迟低、最省）
+        // - MODE_THINK: thinking_level=high（训练/OCR/进化，需要深度推理，依然是 flash-lite 价）
+        const TARGET_MODEL = 'gemini-3.1-flash-lite-preview';
+        const THINKING_LEVEL = mode === 'think' ? 'high' : 'low';
         const modelCache = cachePool[TARGET_MODEL];
         
         const currentSystemPrompt = messages.systemInstruction?.parts?.[0]?.text || "";
@@ -252,7 +254,11 @@ app.post('/api/gemini', async (req, res) => {
             let url = `https://generativelanguage.googleapis.com/v1beta/models/${TARGET_MODEL}:${stream ? 'streamGenerateContent' : 'generateContent'}?key=${API_KEY}`;
             let body = {
                 contents: messages.contents,
-                generationConfig: { temperature: temperature || 0.4, maxOutputTokens: maxOutputTokens || 8000 }
+                generationConfig: {
+                    temperature: temperature || 0.4,
+                    maxOutputTokens: maxOutputTokens || 8000,
+                    thinkingConfig: { thinkingLevel: THINKING_LEVEL }
+                }
             };
             if (useCacheId) {
                 body.cachedContent = useCacheId;
