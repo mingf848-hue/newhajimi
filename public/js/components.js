@@ -194,9 +194,33 @@ function GeneralConfirmModal({ title, message, onConfirm, onCancel, confirmText 
     );
 }
 
+const INTENT_META = {
+    ACCOUNT_SECURITY: { cls: 'intent-account-security', label: '账号安全' },
+    ACCOUNT_LOCK:     { cls: 'intent-account-lock',     label: '风控封号' },
+    DEPOSIT_ISSUE:    { cls: 'intent-deposit-issue',    label: '充值未到' },
+    PROMO_CLAIM:      { cls: 'intent-promo-claim',      label: '活动彩金' },
+    GAME_RESULT:      { cls: 'intent-game-result',      label: '注单结算' },
+    SPORT_RULE:       { cls: 'intent-sport-rule',       label: '盘口规则' },
+    CASINO_RULE:      { cls: 'intent-casino-rule',      label: '场馆规则' },
+    COMPLAINT_AGENT:  { cls: 'intent-complaint-agent',  label: '代理投诉' },
+    COMPLAINT_HARASS: { cls: 'intent-complaint-harass', label: '闹事/骚扰' },
+    IMAGE_ANALYSIS:   { cls: 'intent-image-analysis',   label: '图像分析' },
+    OTHER:            { cls: 'intent-other',            label: '其他咨询' }
+};
+
 const ChatMessage = React.memo(({ msg, idx, activeMsgIndex, feedbackState, correctionText, setCorrectionText, submitCorrectionMsg, setActiveMsgIndex, setFeedbackState, handleLikeMsg, handleDislikeMsg, openSmartOptModal, handleCopy }) => {
+    const intentCode = msg.role === 'assistant' && msg.triageData && msg.triageData.core_intent;
+    const intentInfo = intentCode ? (INTENT_META[intentCode] || INTENT_META.OTHER) : null;
+    const matchedVenue = msg.triageData && msg.triageData.matched_venue;
     return (
         <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} fade-in group`}>
+            {intentInfo && (
+                <div className={`intent-badge ${intentInfo.cls}`}>
+                    <span className="intent-dot"></span>
+                    <span>意图：{intentInfo.label}</span>
+                    {matchedVenue && <span className="opacity-80">· {matchedVenue}</span>}
+                </div>
+            )}
             <div className={`p-3 max-w-[90%] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-zinc-900 text-white rounded-2xl rounded-tr-sm' : 'bg-white border border-zinc-100 text-zinc-800 rounded-2xl rounded-tl-sm shadow-sm'}`}>
                 {msg.displayImages && msg.displayImages.length > 0 && (
                     <div className="flex gap-2 mb-2 flex-wrap">
