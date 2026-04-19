@@ -25,7 +25,7 @@ const convertOpenAIToGemini = (messages) => {
     return { systemInstruction, contents };
 };
 
-const callGeminiStream = async (messages, temp = 0.4, onChunk, mode = MODE_FAST) => {
+const callGeminiStream = async (messages, temp = 0.4, onChunk, mode = MODE_FAST, maxOutputTokens) => {
     try {
         const { systemInstruction, contents } = convertOpenAIToGemini(messages);
         const response = await fetch('/api/gemini', {
@@ -35,7 +35,8 @@ const callGeminiStream = async (messages, temp = 0.4, onChunk, mode = MODE_FAST)
                 messages: { systemInstruction, contents },
                 mode: mode,
                 temperature: temp,
-                stream: true
+                stream: true,
+                ...(maxOutputTokens ? { maxOutputTokens } : {})
             })
         });
 

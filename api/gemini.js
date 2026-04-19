@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   // 从 Zeabur 的环境变量中读取 Key（安全，前端不可见）
   const API_KEY = process.env.GEMINI_API_KEY;
-  const { messages, model, temperature, stream } = req.body;
+  const { messages, model, temperature, stream, maxOutputTokens } = req.body;
 
   // 根据请求类型决定请求哪个 Google API 节点
   // 如果你需要支持 Thinking 模型，可以根据前端传来的 model 参数判断
@@ -21,9 +21,9 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents: messages.contents,
           systemInstruction: messages.systemInstruction,
-          generationConfig: { 
-            temperature: temperature || 0.4, 
-            maxOutputTokens: 8000,
+          generationConfig: {
+            temperature: temperature || 0.4,
+            maxOutputTokens: maxOutputTokens || 8000,
             ...(req.body.responseMimeType ? { responseMimeType: req.body.responseMimeType } : {})
           }
         })

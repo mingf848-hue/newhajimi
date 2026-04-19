@@ -163,7 +163,7 @@ app.post('/api/gemini', async (req, res) => {
         const API_KEY = process.env.GEMINI_API_KEY;
         if (!API_KEY) return res.status(500).json({ error: "No API Key" });
 
-        const { messages, stream, temperature, mode } = req.body;
+        const { messages, stream, temperature, mode, maxOutputTokens } = req.body;
         
         // 🌟 动态模型路由：如果是 think 模式，使用更强大的 3.1-pro-preview
         const TARGET_MODEL = mode === 'think' ? 'gemini-3.1-pro-preview' : 'gemini-3-flash-preview';
@@ -206,7 +206,7 @@ app.post('/api/gemini', async (req, res) => {
             let url = `https://generativelanguage.googleapis.com/v1beta/models/${TARGET_MODEL}:${stream ? 'streamGenerateContent' : 'generateContent'}?key=${API_KEY}`;
             let body = {
                 contents: messages.contents,
-                generationConfig: { temperature: temperature || 0.4, maxOutputTokens: 8000 }
+                generationConfig: { temperature: temperature || 0.4, maxOutputTokens: maxOutputTokens || 8000 }
             };
             if (useCacheId) {
                 body.cachedContent = useCacheId;
