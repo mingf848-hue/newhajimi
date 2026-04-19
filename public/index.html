@@ -179,6 +179,7 @@
                     name: v.name || '未命名场馆',
                     rules: v.rules || '',
                     imageCount: v.imageCount || 0,
+                    imageHashes: Array.isArray(v.imageHashes) ? v.imageHashes : [],
                     updateTime: new Date().toISOString()
                 };
                 await window.fbOps.apiCall('POST', '/api/db/venue_rules', payload);

@@ -99,8 +99,9 @@ function App() {
     const [venueExtracting, setVenueExtracting] = useState(false);
     const [venueProgress, setVenueProgress] = useState({ done: 0, total: 0, current: '' });
     const [venueSaveStatus, setVenueSaveStatus] = useState('idle');
-    const [venueDraft, setVenueDraft] = useState({ name: '', rules: '', imageCount: 0 });
+    const [venueDraft, setVenueDraft] = useState({ name: '', rules: '', imageCount: 0, imageHashes: [] });
     const [venueDragging, setVenueDragging] = useState(false);
+    const [venueBatches, setVenueBatches] = useState([]); // 本次会话的上传批次历史: [{id, timestamp, accepted, skippedExact, skippedVisual, conflicts, sizeBefore, sizeAfter, content, startMark}]
     const venueFileInputRef = useRef(null);
 
     useEffect(() => { trackedTicketsRef.current = trackedTickets; }, [trackedTickets]);
@@ -835,23 +836,28 @@ function App() {
         updateActivity();
         setShowVenueModal(true);
         if (!activeVenueId && venueRules.length > 0) {
-            const first = venueRules[0];
-            setActiveVenueId(first.id);
-            setVenueDraft({ name: first.name || '', rules: first.rules || '', imageCount: first.imageCount || 0 });
+            handleSelectVenue(venueRules[0]);
         } else if (!activeVenueId) {
-            setVenueDraft({ name: '', rules: '', imageCount: 0 });
+            setVenueDraft({ name: '', rules: '', imageCount: 0, imageHashes: [] });
         }
     };
 
     const handleCreateVenue = () => {
         const newId = 'venue_' + Date.now();
         setActiveVenueId(newId);
-        setVenueDraft({ name: '', rules: '', imageCount: 0 });
+        setVenueDraft({ name: '', rules: '', imageCount: 0, imageHashes: [] });
+        setVenueBatches([]);
     };
 
     const handleSelectVenue = (v) => {
         setActiveVenueId(v.id);
-        setVenueDraft({ name: v.name || '', rules: v.rules || '', imageCount: v.imageCount || 0 });
+        setVenueDraft({
+            name: v.name || '',
+            rules: v.rules || '',
+            imageCount: v.imageCount || 0,
+            imageHashes: Array.isArray(v.imageHashes) ? v.imageHashes : []
+        });
+        setVenueBatches([]);
         setVenueSaveStatus('idle');
     };
 
@@ -871,16 +877,6 @@ function App() {
         }
     };
 
-    const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const data = ev.target.result.split(',')[1];
-            resolve({ mimeType: file.type, data, name: file.name });
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-
     const handleVenueImagesUpload = async (files) => {
         if (!files || files.length === 0) return;
         const imgFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
@@ -894,73 +890,177 @@ function App() {
         }
 
         setVenueExtracting(true);
-        setVenueProgress({ done: 0, total: imgFiles.length, current: imgFiles[0].name });
+        setVenueProgress({ done: 0, total: imgFiles.length, current: '正在压缩 & 查重…' });
 
-        const existingRules = venueDraft.rules || '';
         const venueName = venueDraft.name || '未命名场馆';
-        let accumulated = existingRules;
+        const knownHashes = new Set(venueDraft.imageHashes || []);
+
+        // ——【第一步】前端预处理：压缩 → SHA-256 字节哈希去重（只防"完全同一张图重复上传"）
+        // 注：不做感知哈希，因为规则截图多为纯文字，视觉结构极相似，感知哈希会误吃新规则。
+        // 截图边界重叠（同一条规则出现在两张图交界处）由 AI 层在语义比对时直接省略。
+        const prepared = [];
+        const skippedExactFiles = [];
+        let totalBefore = 0, totalAfter = 0;
+
+        for (let i = 0; i < imgFiles.length; i++) {
+            const file = imgFiles[i];
+            setVenueProgress({ done: i, total: imgFiles.length, current: `压缩查重: ${file.name}` });
+            try {
+                const compressed = await window.UtilsLib.compressImage(file, 1600, 0.85);
+                totalBefore += file.size;
+                totalAfter += compressed.newSize;
+                const sha = await window.UtilsLib.sha256Base64(compressed.data);
+                if (knownHashes.has(sha) || prepared.some(p => p.sha === sha)) {
+                    skippedExactFiles.push(file.name);
+                    continue;
+                }
+                prepared.push({ ...compressed, sha });
+            } catch (e) {
+                console.warn('压缩/哈希失败，跳过:', file.name, e);
+                skippedExactFiles.push(`${file.name}(读取失败)`);
+            }
+        }
+
+        if (prepared.length === 0) {
+            setVenueExtracting(false);
+            setVenueProgress({ done: 0, total: 0, current: '' });
+            setNotification({
+                title: '全部是重复文件',
+                message: `${skippedExactFiles.length} 张都已上传过（字节完全相同），已跳过。`,
+                type: 'success'
+            });
+            return;
+        }
+
+        // ——【第二步】分批调 Gemini，带冲突检测
+        const batchId = 'batch_' + Date.now();
+        const startMark = `\n\n<<<BATCH:${batchId}>>>`;
         const batchSize = 2;
+        let accumulated = venueDraft.rules || '';
+        const addedChunks = [];
+        let conflictCount = 0;
 
         try {
-            for (let i = 0; i < imgFiles.length; i += batchSize) {
-                const batch = imgFiles.slice(i, i + batchSize);
-                setVenueProgress({ done: i, total: imgFiles.length, current: batch.map(f => f.name).join(', ') });
+            for (let i = 0; i < prepared.length; i += batchSize) {
+                const batch = prepared.slice(i, i + batchSize);
+                setVenueProgress({
+                    done: skippedExactFiles.length + i,
+                    total: imgFiles.length,
+                    current: `AI 提取中: ${batch.map(f => f.name).join(', ')}`
+                });
 
-                const encoded = await Promise.all(batch.map(readFileAsBase64));
-
-                const prompt = `你是"场馆规则 OCR + 结构化"提取器，当前场馆：【${venueName}】。
+                const prompt = `你是"场馆规则 OCR + 结构化 + 冲突检测"提取器，当前场馆：【${venueName}】。
 
 【核心原则：逐字保真，禁止简化】
-你的唯一任务是把截图里看到的**规则原文**一字不差地誊写出来。这份提取结果将作为客服回答会员的**唯一事实依据**，任何遗漏或概括都会导致客服解释错误被投诉。
+把截图里的**规则原文**一字不差地誊写出来，作为客服唯一事实依据。
 
-【必须完整保留的内容】
-1. 所有**范例 / 举例 / 示范**（例："范例1"、"范例2"、"范例3"）——包括题干、投注金额、每一步计算公式、中间数、最终结果，全部一个字都不能丢。
-2. 所有**数学公式 / 赔率计算**——$100 x 1.85 x 2.05 = … 每一步都要抄下来，不要写"类似"或"同理"。
-3. 所有**数字、赔率、百分比、金额、时限**（如 "1.85"、"$379.25"、"-0.5/1"、"30 秒"）必须一字不差。
-4. 所有**表格**——用 Markdown 表格原样输出（| 投注项 | 让球 | 赔率 | 赛果 | 结果 | 这种形式），每一行每一列都要抄下来。
-5. 所有**连串/复式/组合对照表**（如 "2串1 / 3串1 / 3串4 / 4串11 / 5串26 / 6串57 / 7串120 / 8串247 / 9串502 / 10串1013" 等）——全部保留，对应的"投注选项数/投注总数/双式/三式/四串一…"数字列要完整抄下。
-6. 所有**投注类型定义**（如"3串4 是由3个不同赛事组成的4个不同的投注…"）——完整照抄整段。
-7. 所有**条款、注意事项、异常规则、最低派彩条件**——逐字照抄。
+【必须完整保留】
+1. 所有范例/举例——题干、投注金额、每步计算公式、中间数、最终结果一字不丢。
+2. 所有数学公式/赔率计算——每一步都抄下来，不写"类似""同理"。
+3. 所有数字、赔率、百分比、金额、时限——原样抄。
+4. 所有表格——Markdown 表格原样输出。
+5. 所有连串/复式/组合对照表——全部数字列完整保留。
+6. 所有投注类型定义——整段照抄。
+7. 所有条款、注意事项、异常规则——逐字照抄。
 
-【严禁行为】
-× 不得把多个范例合并成一个。× 不得省略中间计算步骤（"1.85 x 1 x 2.05 = 3.7925" 这种行必须保留）。× 不得用"等等、省略、略、以下类推"替代具体内容。× 不得改写为"简明短句"。× 不得合并去重"看起来重复"的条款——只在**同一页内完全字面重复**时可合并。
+【严禁】× 合并范例 × 省略计算步骤 × 用"等等、略、以下类推" × 改写为"简明短句" × 合并看起来重复的条款（只有同一页内完全字面重复才可合并）。
+
+【重点 —— 截图边界重叠去重（最常见场景）】
+用户滚动截屏时，同一条规则几乎必然同时出现在上一张图的底部与下一张图的顶部（例如"规则3"横跨两张图）。你必须识别并**直接省略**这些重叠内容，避免规则库重复污染。
+
+判定与动作（按优先级）：
+
+1. **重叠/重复 → 直接省略，不要输出**
+   - 本批某段落与【已有规则】字面完全一致 → **整段省略**，一个字都不要写出来。
+   - 本批某段落与【已有规则】仅排版/空白差异，实质内容相同 → **整段省略**。
+   - 本批内部两张图边界处重复的段落 → **只保留一次**。
+
+2. **版本冲突 → 必须用 [[CONFLICT]] 标记（少见但重要）**
+   - 本批某段落与【已有规则】在具体数字/金额/时间/赔率/条款上**确有不同**（明显版本更新）→ 用
+     \`\`\`
+     [[CONFLICT]]
+     旧: <已有规则中的原句>
+     新: <本批图中的原句>
+     [[/CONFLICT]]
+     \`\`\`
+     包裹，逐字对比。不要自作主张只保留一个。
+
+3. **新增/补充 → 正常输出**
+   - 已有规则的续写、新主题、新范例、新表格 → 正常输出原文。
 
 【输出格式】
-- 直接输出规则原文，允许使用 Markdown 标题（##）、列表、表格来还原视觉层次。
-- 不要写前言、总结、"根据图片"、"以下是规则"这类废话。
-- 按图中原本的顺序输出；如果多张图是同一节的连续内容，衔接起来即可。
-- 忽略的只有：广告横幅、客服 QQ/微信二维码、页眉页脚的"首页/登录/充值"按钮、侧边导航栏。
+- 直接输出**本批新增**的规则原文（省略已存在内容），使用 Markdown 标题、列表、表格。
+- 若本批截图内容全部都已存在于【已有规则】中 → 只输出一行：\`（本批截图与已有规则完全重复，无新增内容）\`
+- 不写前言/总结/"根据图片"。
+- 忽略广告、客服二维码、页眉页脚导航。
 
-【已有规则（仅供你判断"这页是不是已经抄过了"；完全相同的段落才跳过，否则请完整输出）】：
-${accumulated ? accumulated.substring(0, 2500) : '(空)'}
+【已有规则（用于对比去重和冲突检测）】：
+${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)'}
 
-请立即输出本批截图中的规则原文：`;
+请立即输出本批截图的**新增**规则原文（省略重叠、标记冲突）：`;
 
-                const parts = encoded.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+                const parts = batch.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }));
                 parts.push({ text: prompt });
 
                 const messages = [
-                    { role: 'system', content: '你是一个严格的 OCR+结构化抄录员。任务是逐字誊写图中的规则、公式、范例、表格、数字，禁止任何形式的简化、概括或省略。' },
+                    { role: 'system', content: '你是严格的 OCR+结构化抄录员+版本比对员。逐字誊写规则、公式、范例、表格、数字，禁止简化。与已有规则完全一致的段落直接省略不输出，仅对数字/条款冲突用 [[CONFLICT]]..[[/CONFLICT]] 标记。' },
                     { role: 'user', content: parts }
                 ];
 
                 const res = await callGeminiStream(messages, 0.15, null, MODE_THINK, 32000);
                 if (res.success && res.data) {
-                    const newChunk = res.data.trim();
-                    if (newChunk) {
+                    const raw = res.data.trim();
+                    if (raw) {
+                        conflictCount += (raw.match(/\[\[CONFLICT\]\]/g) || []).length;
+                        const header = `\n\n---【批次 ${new Date().toLocaleTimeString()} · 图 ${i + 1}-${Math.min(i + batchSize, prepared.length)}】---\n`;
+                        const chunkWithHeader = header + raw;
+                        addedChunks.push(chunkWithHeader);
                         accumulated = accumulated
-                            ? `${accumulated}\n\n---【第 ${i + 1} - ${Math.min(i + batchSize, imgFiles.length)} 张】---\n${newChunk}`
-                            : newChunk;
-                        setVenueDraft(prev => ({ ...prev, rules: accumulated, imageCount: (prev.imageCount || 0) + batch.length }));
+                            ? (accumulated.includes(startMark) ? accumulated + chunkWithHeader : accumulated + startMark + chunkWithHeader)
+                            : startMark + chunkWithHeader;
+                        setVenueDraft(prev => ({
+                            ...prev,
+                            rules: accumulated,
+                            imageCount: (prev.imageCount || 0) + batch.length
+                        }));
                     }
                 } else if (res.error) {
                     console.warn('Venue extract batch error:', res.error);
                 }
 
-                setVenueProgress({ done: Math.min(i + batchSize, imgFiles.length), total: imgFiles.length, current: '' });
+                setVenueProgress({
+                    done: skippedExactFiles.length + Math.min(i + batchSize, prepared.length),
+                    total: imgFiles.length,
+                    current: ''
+                });
             }
 
-            setNotification({ title: '提取完成', message: `已处理 ${imgFiles.length} 张截图，请检查规则内容并保存。`, type: 'success' });
+            // 更新本次 hashes 记录
+            const newHashes = prepared.map(p => p.sha);
+            setVenueDraft(prev => ({
+                ...prev,
+                imageHashes: [...(prev.imageHashes || []), ...newHashes]
+            }));
+
+            // 记录本批元信息（供"撤销上一批"使用）
+            setVenueBatches(prev => [...prev, {
+                id: batchId,
+                timestamp: Date.now(),
+                accepted: prepared.length,
+                skippedExact: skippedExactFiles.length,
+                conflicts: conflictCount,
+                sizeBefore: totalBefore,
+                sizeAfter: totalAfter,
+                startMark,
+                hashes: newHashes
+            }]);
+
+            const saved = totalBefore > 0 ? Math.round((1 - totalAfter / totalBefore) * 100) : 0;
+            setNotification({
+                title: '本批提取完成',
+                message: `新增 ${prepared.length} 张${skippedExactFiles.length > 0 ? `，跳过 ${skippedExactFiles.length} 张字节重复` : ''}${conflictCount > 0 ? `，AI 检测到 ${conflictCount} 处规则更新 ⚠️` : ''}。压缩节省 ${saved}%。`,
+                type: 'success'
+            });
         } catch (err) {
             console.error(err);
             setNotification({ title: '提取出错', message: err.message || '未知错误', type: 'error' });
@@ -968,6 +1068,24 @@ ${accumulated ? accumulated.substring(0, 2500) : '(空)'}
             setVenueExtracting(false);
             setVenueProgress({ done: 0, total: 0, current: '' });
         }
+    };
+
+    const handleUndoLastBatch = () => {
+        if (venueBatches.length === 0) return;
+        const last = venueBatches[venueBatches.length - 1];
+        if (!confirm(`确定撤销最近一批上传吗？\n将删除 ${last.accepted} 张图的提取内容${last.conflicts > 0 ? `（含 ${last.conflicts} 处冲突标记）` : ''}。`)) return;
+
+        // 切掉 startMark 及其后面的内容
+        const cutAt = venueDraft.rules.lastIndexOf(last.startMark);
+        const newRules = cutAt >= 0 ? venueDraft.rules.substring(0, cutAt) : venueDraft.rules;
+        const removeSet = new Set(last.hashes);
+        setVenueDraft(prev => ({
+            ...prev,
+            rules: newRules,
+            imageCount: Math.max(0, (prev.imageCount || 0) - last.accepted),
+            imageHashes: (prev.imageHashes || []).filter(h => !removeSet.has(h))
+        }));
+        setVenueBatches(prev => prev.slice(0, -1));
     };
 
     const handleSaveVenue = async () => {
