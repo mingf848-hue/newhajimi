@@ -662,7 +662,7 @@ function App() {
                    }
                    return hist;
                });
-           }, MODE_THINK);
+           }, MODE_FAST);
 
            if (res.error) setAiReply("AI Error: " + res.error);
            if (res.usage) setLastUsage(res.usage);

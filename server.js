@@ -10,10 +10,50 @@ const PORT = process.env.PORT || 8080;
 // 移除全局的 TARGET_MODEL，改为动态获取
 
 // 缓存状态池（按模型区分，防止 Flash 和 Pro 的缓存互相污染）
+// 持久化到 Mongo，Zeabur 冷启/重启不丢失，避免每次重启都重建缓存。
 const cachePool = {
-    'gemini-3-flash-preview': { id: null, hash: null },
-    'gemini-3.1-pro-preview': { id: null, hash: null }
+    'gemini-3-flash-preview': { id: null, hash: null, expireTime: null },
+    'gemini-3.1-pro-preview': { id: null, hash: null, expireTime: null }
 };
+
+let cacheStore = null;
+async function hydrateCachePool() {
+    try {
+        if (!cacheStore) cacheStore = getModel('gemini_cache_pool');
+        const rows = await cacheStore.find({}).lean();
+        for (const r of rows) {
+            if (cachePool[r._id]) {
+                cachePool[r._id] = { id: r.id || null, hash: r.hash ?? null, expireTime: r.expireTime || null };
+            }
+        }
+        console.log('[Cache] 已从 Mongo 恢复缓存池:', JSON.stringify(cachePool));
+    } catch (e) {
+        console.warn('[Cache] 恢复缓存池失败（非致命）:', e.message);
+    }
+}
+async function persistCachePool(model) {
+    try {
+        if (!cacheStore) cacheStore = getModel('gemini_cache_pool');
+        const c = cachePool[model];
+        await cacheStore.updateOne(
+            { _id: model },
+            { $set: { id: c.id, hash: c.hash, expireTime: c.expireTime, updatedAt: new Date() } },
+            { upsert: true }
+        );
+    } catch (e) {
+        console.warn('[Cache] 持久化失败（非致命）:', e.message);
+    }
+}
+async function deleteRemoteCache(apiKey, cacheId) {
+    if (!cacheId) return;
+    try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${cacheId}?key=${apiKey}`, { method: 'DELETE' });
+        if (r.ok) console.log(`[Cache] 🗑️  已删除孤儿缓存: ${cacheId}`);
+        else console.warn(`[Cache] 删除孤儿缓存失败(${r.status}): ${cacheId}`);
+    } catch (e) {
+        console.warn('[Cache] 删除孤儿缓存异常:', e.message);
+    }
+}
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +75,10 @@ if (!MONGO_URI) {
 }
 
 mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ MongoDB 连接成功'))
+    .then(async () => {
+        console.log('✅ MongoDB 连接成功');
+        await hydrateCachePool();
+    })
     .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
 const getModel = (col) => mongoose.models[col] || mongoose.model(col, new mongoose.Schema({ _id: String }, { strict: false }), col);
@@ -172,34 +215,37 @@ app.post('/api/gemini', async (req, res) => {
         const currentSystemPrompt = messages.systemInstruction?.parts?.[0]?.text || "";
         const currentHash = simpleHash(currentSystemPrompt);
 
+        // 缓存创建改为 await：让**当前这次**请求就用上 cacheId，而不是白白多付一次全量。
+        // 同时在 hash 变化时先 DELETE 老缓存，避免孤儿缓存按存储时间继续计费。
         if (currentSystemPrompt.length > 2000 && (!modelCache.id || modelCache.hash !== currentHash)) {
-            (async () => {
-                try {
-                    console.log(`[Auto-Cache] 触发自动长效缓存机制... 模型: ${TARGET_MODEL}`);
-                    const createRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model: `models/${TARGET_MODEL}`,
-                            contents: [],
-                            systemInstruction: { parts: [{ text: currentSystemPrompt }] },
-                            ttl: '2592000s' 
-                        })
-                    });
-                    const createData = await createRes.json();
-                    if (createData.name) {
-                        modelCache.id = createData.name;
-                        modelCache.hash = currentHash;
-                        
-                        const expireDate = new Date(createData.expireTime);
-                        console.log(`[Auto-Cache] ✅ 缓存创建成功! 模型: ${TARGET_MODEL}, ID: ${modelCache.id}`);
-                    } else if (createData.error) {
-                        console.error("[Auto-Cache] 创建失败:", createData.error.message);
-                    }
-                } catch (e) {
-                    console.error("[Auto-Cache] 请求异常:", e.message);
+            const oldId = modelCache.id;
+            try {
+                console.log(`[Auto-Cache] 触发自动长效缓存机制... 模型: ${TARGET_MODEL}`);
+                const createRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: `models/${TARGET_MODEL}`,
+                        contents: [],
+                        systemInstruction: { parts: [{ text: currentSystemPrompt }] },
+                        ttl: '2592000s'
+                    })
+                });
+                const createData = await createRes.json();
+                if (createData.name) {
+                    modelCache.id = createData.name;
+                    modelCache.hash = currentHash;
+                    modelCache.expireTime = createData.expireTime || null;
+                    console.log(`[Auto-Cache] ✅ 缓存创建成功! 模型: ${TARGET_MODEL}, ID: ${modelCache.id}`);
+                    persistCachePool(TARGET_MODEL);
+                    // 老缓存异步删除，不阻塞本次请求
+                    if (oldId && oldId !== modelCache.id) deleteRemoteCache(API_KEY, oldId);
+                } else if (createData.error) {
+                    console.error("[Auto-Cache] 创建失败，本次走全量:", createData.error.message);
                 }
-            })();
+            } catch (e) {
+                console.error("[Auto-Cache] 请求异常，本次走全量:", e.message);
+            }
         }
 
         const sendRequest = async (useCacheId) => {
@@ -220,7 +266,11 @@ app.post('/api/gemini', async (req, res) => {
         if (modelCache.id && modelCache.hash === currentHash) {
             googleResponse = await sendRequest(modelCache.id);
             if (googleResponse.status === 404 || googleResponse.status === 403) {
-                modelCache.id = null; 
+                console.warn(`[Cache] 远端缓存失效(${googleResponse.status})，清理并走全量: ${modelCache.id}`);
+                modelCache.id = null;
+                modelCache.hash = null;
+                modelCache.expireTime = null;
+                persistCachePool(TARGET_MODEL);
                 googleResponse = await sendRequest(null);
             }
         } else {
