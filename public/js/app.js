@@ -521,12 +521,14 @@ function App() {
                triageResult.core_intent = "IMAGE_ANALYSIS";
            }
 
-           let venueRuleContext = "";
+           // 场馆规则：移到 System Prompt 走 Gemini Context Cache（server.js 对 >2000字 systemInstruction 自动建缓存, TTL 30天）
+           // 这里只做一个"命中提示"，让 AI 重点关注对应章节，不再作为唯一注入源
+           let venueHitHint = "";
            if (triageResult.matched_venue && venueRules.length > 0) {
                const mv = triageResult.matched_venue.toLowerCase();
                const matched = venueRules.find(v => (v.name || '').toLowerCase().includes(mv) || mv.includes((v.name || '').toLowerCase()));
-               if (matched && matched.rules) {
-                   venueRuleContext = `\n\n### 🎯 命中场馆规则 (${matched.name})\n${matched.rules}`;
+               if (matched) {
+                   venueHitHint = `\n- 🎯 已命中场馆【${matched.name}】：请在 System Prompt 的《场馆规则库》中定位该场馆章节，严格按其条款回答。`;
                }
            }
 
@@ -562,12 +564,12 @@ function App() {
            let dynamicContext = `
            【系统情报 (Triage Intelligence)】：
            - AI 初步判定诉求为：${triageResult.core_intent}
-           - 命中场馆：${triageResult.matched_venue || '无'}
+           - 命中场馆：${triageResult.matched_venue || '无'}${venueHitHint}
            - 需注意过滤的用户噪音：${triageResult.noise_detected?.length > 0 ? triageResult.noise_detected.join(', ') : '无'}
            - 客观注单数据（如有）：${betContext || '无'}
-           - 赛事异常公告（如有）：${noticeContext || '无'}${venueRuleContext}
+           - 赛事异常公告（如有）：${noticeContext || '无'}
 
-           *注意：请结合你的【核心人设】和【处理紧急问题规则】，自行判断如何回复。不要暴露你的思考过程，直接给出回复。如果注单未结算，在结尾加入 <<<ACTION_TRACK>>> 触发监控。若命中了场馆规则，请严格按照规则回答，不要编造不存在的条款。*
+           *注意：请结合你的【核心人设】和【处理紧急问题规则】，自行判断如何回复。不要暴露你的思考过程，直接给出回复。如果注单未结算，在结尾加入 <<<ACTION_TRACK>>> 触发监控。涉及场馆规则、盘口规则、赔率计算、结算细则的问题，必须严格依据 System Prompt 中《场馆规则库》里的对应条款回答，不得编造或脑补。*
            `;
 
            let redLinesContext = "";
@@ -584,16 +586,26 @@ function App() {
            const currentScriptLib = scripts.map(s => `[${s.keywords || '通用'}]: ${s.content}`).join("\n");
            const hiddenDocs = extraKnowledge.map(k => `[${k.keywords}]: ${k.content}`).join("\n");
 
+           // 场馆规则全量塞进 System Prompt —— 后端 server.js 对 >2000字 systemInstruction 自动建立 30 天长效缓存，
+           // 命中后场馆规则这部分按缓存价计费（约为原价的 1/4），不会因场馆多而推高单次成本。
+           const venueLib = venueRules
+               .filter(v => v.rules && v.rules.trim())
+               .map(v => `#### 【${v.name}】\n${v.rules}`)
+               .join("\n\n---\n\n");
+           const venueSection = venueLib
+               ? `\n\n### 场馆规则库 (Venue Rules — 全量权威条款，回答规则类问题时必须定位并照抄相关条款)\n${venueLib}`
+               : '';
+
            const staticSystemPrompt = `
            ${chatBase}
-           
+
            ### 业务硬性逻辑 (Business Rules)
            ${businessRules}
-           
+
            ### 话术库与知识库
            ${chatKnowledge}
            ${currentScriptLib}
-           ${hiddenDocs}
+           ${hiddenDocs}${venueSection}
            `;
 
            const executionUserPrompt = `
