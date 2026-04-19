@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     if (!API_KEY) return res.status(500).json({ error: "No API Key found" });
 
     const { systemPrompt, model } = req.body;
-    const targetModel = model || 'gemini-3-flash-preview'; 
+    const targetModel = model || 'gemini-3.1-flash-lite-preview';
 
     console.log(`[Cache] 正在尝试创建缓存... 模型: ${targetModel}`);
 
