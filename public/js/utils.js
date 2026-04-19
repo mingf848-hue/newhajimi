@@ -124,7 +124,53 @@ const UtilsLib = {
     SESSION_KEY_USER: 'session_user',
     SESSION_KEY_ROLE: 'session_role',
     SESSION_TIMEOUT: 86400000, // 24 hours
-    CACHE_TTL_SECONDS: 2592000 // 30 days
+    CACHE_TTL_SECONDS: 2592000, // 30 days
+
+    // 压缩图片 - 保留文字清晰度但大幅减小体积，默认最大宽度 1600px
+    async compressImage(file, maxWidth = 1600, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onerror = reject;
+                img.onload = () => {
+                    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+                    const w = Math.round(img.width * scale);
+                    const h = Math.round(img.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, w, h);
+                    // 统一输出 JPEG 以最大化压缩率（文字截图 JPEG q=0.85 肉眼无差）
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    const base64 = dataUrl.split(',')[1];
+                    resolve({
+                        mimeType: 'image/jpeg',
+                        data: base64,
+                        name: file.name,
+                        originalSize: file.size,
+                        newSize: Math.round(base64.length * 0.75),
+                        width: w,
+                        height: h
+                    });
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+
+    // 字节级 SHA-256（用于"完全相同的文件"去重）
+    async sha256Base64(b64) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const hash = await crypto.subtle.digest('SHA-256', bytes);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 };
 
 window.UtilsLib = UtilsLib;
