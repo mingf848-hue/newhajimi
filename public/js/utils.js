@@ -80,7 +80,8 @@ const UtilsLib = {
             this.safeLoad(() => fbOps.getTemplates(), []),
             this.safeLoad(() => fbOps.getCustomVars(), []),
             this.safeLoad(() => fbOps.getTrackedTickets(user), []),
-            this.safeLoad(() => fbOps.getKnowledge(), [])
+            this.safeLoad(() => fbOps.getKnowledge(), []),
+            this.safeLoad(() => fbOps.getVenueRules ? fbOps.getVenueRules() : [], [])
         ]);
 
         return {
@@ -90,7 +91,8 @@ const UtilsLib = {
             templates: results[3],
             customVars: results[4],
             tracked: results[5],
-            knowledge: results[6]
+            knowledge: results[6],
+            venueRules: results[7]
         };
     },
 

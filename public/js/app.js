@@ -92,6 +92,17 @@ function App() {
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [accountForm, setAccountForm] = useState({ id: null, username: '', role: 'user', secret: '', active: true, note: '' });
 
+    // 场馆规则库
+    const [venueRules, setVenueRules] = useState([]);
+    const [showVenueModal, setShowVenueModal] = useState(false);
+    const [activeVenueId, setActiveVenueId] = useState(null);
+    const [venueExtracting, setVenueExtracting] = useState(false);
+    const [venueProgress, setVenueProgress] = useState({ done: 0, total: 0, current: '' });
+    const [venueSaveStatus, setVenueSaveStatus] = useState('idle');
+    const [venueDraft, setVenueDraft] = useState({ name: '', rules: '', imageCount: 0 });
+    const [venueDragging, setVenueDragging] = useState(false);
+    const venueFileInputRef = useRef(null);
+
     useEffect(() => { trackedTicketsRef.current = trackedTickets; }, [trackedTickets]);
 
     useEffect(() => {
@@ -100,10 +111,14 @@ function App() {
         }
     }, [chatHistory, aiReply, aiPhase]);
 
-    const buildStaticCache = (scriptsData, templatesData, chatKB, annKB) => {
+    const buildStaticCache = (scriptsData, templatesData, chatKB, annKB, venueData) => {
         const safeScripts = Array.isArray(scriptsData) ? scriptsData : [];
         const chatScriptLib = safeScripts.map(s => `[${s.keywords || '通用'}]: ${s.content}`).join("\n");
-        setChatStaticContext(`${chatBase}\n\n### 知识库 (Knowledge Base)\n${chatKB || "暂无训练规则"}\n\n### 话术库 (Script Library)\n${chatScriptLib}`);
+        const safeVenues = Array.isArray(venueData) ? venueData : venueRules;
+        const venueLib = (safeVenues || []).filter(v => v.rules && v.rules.trim())
+            .map(v => `【${v.name}】\n${v.rules}`).join("\n\n---\n\n");
+        const venueSection = venueLib ? `\n\n### 场馆规则库 (Venue Rules — 用户问及对应场馆规则时严格引用)\n${venueLib}` : '';
+        setChatStaticContext(`${chatBase}\n\n### 知识库 (Knowledge Base)\n${chatKB || "暂无训练规则"}\n\n### 话术库 (Script Library)\n${chatScriptLib}${venueSection}`);
         const annTemplateLib = JSON.stringify(templatesData || []);
         setAnnStaticContext(`${annBase}\n\n### 知识库/规则 (AI Knowledge Base)\n${annKB || "暂无训练规则"}\n\n### 模板库 (Template Library)\n${annTemplateLib}`);
     };
@@ -145,6 +160,7 @@ function App() {
             setImages(data.images || []);
             setAllTemplates(data.templates || []);
             setTrackedTickets(data.tracked || []);
+            setVenueRules(data.venueRules || []);
             if(data.tracked && data.tracked.length > 0) setShowTrackerModal(false);
 
             if (data.customVars && data.customVars.length > 0) { setTemplateVars([...INITIAL_VARS, ...data.customVars]); }
@@ -166,7 +182,7 @@ function App() {
             setAnnBase(aBase);
             setAnnKnowledge(aKnow);
 
-            buildStaticCache(data.scripts || [], data.templates || [], cKnow, aKnow);
+            buildStaticCache(data.scripts || [], data.templates || [], cKnow, aKnow, data.venueRules || []);
 
             if (user === 'aratakito') {
                 fetchAccounts();
@@ -477,27 +493,41 @@ function App() {
         try {
            setAiPhase('triage');
            
+           const venueNames = venueRules.map(v => v.name).filter(Boolean);
+           const venueListHint = venueNames.length > 0 ? `当前已收录的场馆有：${venueNames.join('、')}。若用户提到这些场馆，intent 可设为 CASINO_RULE。` : '';
+
            const triageSchema = `
            {
-             "core_intent": "主要核心诉求(枚举: ACCOUNT_SECURITY/账号安全被盗, ACCOUNT_LOCK/风控封号, DEPOSIT_ISSUE/充值未到, PROMO_CLAIM/活动彩金, GAME_RESULT/注单结算疑问, OTHER/其他)",
+             "core_intent": "主要核心诉求(枚举: ACCOUNT_SECURITY/账号安全被盗, ACCOUNT_LOCK/风控封号, DEPOSIT_ISSUE/充值未到, PROMO_CLAIM/活动彩金, GAME_RESULT/注单结算疑问, SPORT_RULE/体育盘口规则咨询, CASINO_RULE/真人或电子场馆规则, COMPLAINT_AGENT/代理投诉或对接问题, COMPLAINT_HARASS/闹事谩骂骚扰, OTHER/其他)",
+             "matched_venue": "若 intent 为 CASINO_RULE 或 SPORT_RULE 并能判定具体场馆/体育类别名称，在此填其名称，否则为null",
              "noise_detected": ["用户话术中用于干扰的次要或情绪词汇"],
              "extracted_order_id": "如果用户提供了5开头的纯数字注单号(15位以上)，在此提取，否则为null"
            }`;
 
            const triagePrompt = `你是一个冷酷的“后台风控分诊员”。
            任务：分析用户最新输入的工单，剥离一切噪音，只提取最核心的业务意图，并以纯 JSON 返回。
+           ${venueListHint}
            【输出Schema】: ${triageSchema}
            【用户最新输入】: ${currentUserMsg}`;
 
            const triageMessages = [ { role: 'system', content: 'You are a JSON extractor for Risk Control.' }, { role: 'user', content: triagePrompt } ];
            
-           let triageResult = { core_intent: "OTHER", noise_detected: [], extracted_order_id: null };
-           
+           let triageResult = { core_intent: "OTHER", matched_venue: null, noise_detected: [], extracted_order_id: null };
+
            if (currentImages.length === 0) {
                const tRes = await callGeminiJSON(triageMessages, 0.1, MODE_FAST);
-               if (tRes.success && tRes.data) { triageResult = tRes.data; }
+               if (tRes.success && tRes.data) { triageResult = { ...triageResult, ...tRes.data }; }
            } else {
                triageResult.core_intent = "IMAGE_ANALYSIS";
+           }
+
+           let venueRuleContext = "";
+           if (triageResult.matched_venue && venueRules.length > 0) {
+               const mv = triageResult.matched_venue.toLowerCase();
+               const matched = venueRules.find(v => (v.name || '').toLowerCase().includes(mv) || mv.includes((v.name || '').toLowerCase()));
+               if (matched && matched.rules) {
+                   venueRuleContext = `\n\n### 🎯 命中场馆规则 (${matched.name})\n${matched.rules}`;
+               }
            }
 
            let betContext = "";
@@ -532,11 +562,12 @@ function App() {
            let dynamicContext = `
            【系统情报 (Triage Intelligence)】：
            - AI 初步判定诉求为：${triageResult.core_intent}
+           - 命中场馆：${triageResult.matched_venue || '无'}
            - 需注意过滤的用户噪音：${triageResult.noise_detected?.length > 0 ? triageResult.noise_detected.join(', ') : '无'}
            - 客观注单数据（如有）：${betContext || '无'}
-           - 赛事异常公告（如有）：${noticeContext || '无'}
-           
-           *注意：请结合你的【核心人设】和【处理紧急问题规则】，自行判断如何回复。不要暴露你的思考过程，直接给出回复。如果注单未结算，在结尾加入 <<<ACTION_TRACK>>> 触发监控。*
+           - 赛事异常公告（如有）：${noticeContext || '无'}${venueRuleContext}
+
+           *注意：请结合你的【核心人设】和【处理紧急问题规则】，自行判断如何回复。不要暴露你的思考过程，直接给出回复。如果注单未结算，在结尾加入 <<<ACTION_TRACK>>> 触发监控。若命中了场馆规则，请严格按照规则回答，不要编造不存在的条款。*
            `;
 
            let redLinesContext = "";
@@ -787,6 +818,159 @@ function App() {
         }
     };
 
+    // ===== 场馆规则库 Handlers =====
+    const openVenueModal = () => {
+        updateActivity();
+        setShowVenueModal(true);
+        if (!activeVenueId && venueRules.length > 0) {
+            const first = venueRules[0];
+            setActiveVenueId(first.id);
+            setVenueDraft({ name: first.name || '', rules: first.rules || '', imageCount: first.imageCount || 0 });
+        } else if (!activeVenueId) {
+            setVenueDraft({ name: '', rules: '', imageCount: 0 });
+        }
+    };
+
+    const handleCreateVenue = () => {
+        const newId = 'venue_' + Date.now();
+        setActiveVenueId(newId);
+        setVenueDraft({ name: '', rules: '', imageCount: 0 });
+    };
+
+    const handleSelectVenue = (v) => {
+        setActiveVenueId(v.id);
+        setVenueDraft({ name: v.name || '', rules: v.rules || '', imageCount: v.imageCount || 0 });
+        setVenueSaveStatus('idle');
+    };
+
+    const handleDeleteVenue = async (id, e) => {
+        if (e) e.stopPropagation();
+        if (!confirm('确定删除此场馆的所有规则吗？此操作不可撤销。')) return;
+        try {
+            const updated = await window.fbOps.deleteVenueRules(id);
+            setVenueRules(updated || []);
+            if (activeVenueId === id) {
+                setActiveVenueId(null);
+                setVenueDraft({ name: '', rules: '', imageCount: 0 });
+            }
+            buildStaticCache(scripts, allTemplates, chatKnowledge, annKnowledge, updated || []);
+        } catch(err) {
+            setNotification({ title: '删除失败', message: err.message, type: 'error' });
+        }
+    };
+
+    const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const data = ev.target.result.split(',')[1];
+            resolve({ mimeType: file.type, data, name: file.name });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    const handleVenueImagesUpload = async (files) => {
+        if (!files || files.length === 0) return;
+        const imgFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if (imgFiles.length === 0) {
+            setNotification({ title: '提示', message: '请选择图片文件', type: 'error' });
+            return;
+        }
+        if (!activeVenueId) {
+            setNotification({ title: '提示', message: '请先选择或创建一个场馆', type: 'error' });
+            return;
+        }
+
+        setVenueExtracting(true);
+        setVenueProgress({ done: 0, total: imgFiles.length, current: imgFiles[0].name });
+
+        const existingRules = venueDraft.rules || '';
+        const venueName = venueDraft.name || '未命名场馆';
+        let accumulated = existingRules;
+        const batchSize = 4;
+
+        try {
+            for (let i = 0; i < imgFiles.length; i += batchSize) {
+                const batch = imgFiles.slice(i, i + batchSize);
+                setVenueProgress({ done: i, total: imgFiles.length, current: batch.map(f => f.name).join(', ') });
+
+                const encoded = await Promise.all(batch.map(readFileAsBase64));
+
+                const prompt = `你是一个专业的体育博彩场馆规则提取器。当前场馆名称：【${venueName}】。
+任务：仔细阅读下面的多张截图(可能是盘口规则/返水/活动/常见问题/玩法说明等)，把其中与规则、条款、赔率限制、结算规则、投注类型定义等业务相关的条款提炼成结构化的纯文本规则文档，条目清晰可读。
+
+【重要要求】：
+1. 只输出纯规则文字，不要任何前言或客套话。
+2. 使用简明的中文短句，按主题分段（如：结算规则 / 注单有效性 / 投注类型定义 / 异常情况处理 / 特殊玩法 等）。
+3. 忽略图片中的广告、装饰、页眉页脚、客服二维码等非规则内容。
+4. 如果一张图里有相同规则的重复片段，合并去重。
+5. 不要输出"根据图片"、"以下是规则"等无意义开头。
+6. 仅输出规则原文（允许用标题/列表）。
+
+【已有规则(避免重复)】：
+${accumulated ? accumulated.substring(0, 1500) : '(空)'}
+
+请输出本批截图中新增或补充的规则内容（纯文本）：`;
+
+                const parts = encoded.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+                parts.push({ text: prompt });
+
+                const messages = [
+                    { role: 'system', content: '你是精准的文档提取专家，只输出结构化的规则文本。' },
+                    { role: 'user', content: parts }
+                ];
+
+                const res = await callGeminiStream(messages, 0.2, null, MODE_THINK);
+                if (res.success && res.data) {
+                    const newChunk = res.data.trim();
+                    if (newChunk) {
+                        accumulated = accumulated
+                            ? `${accumulated}\n\n---【第 ${i + 1} - ${Math.min(i + batchSize, imgFiles.length)} 张】---\n${newChunk}`
+                            : newChunk;
+                        setVenueDraft(prev => ({ ...prev, rules: accumulated, imageCount: (prev.imageCount || 0) + batch.length }));
+                    }
+                } else if (res.error) {
+                    console.warn('Venue extract batch error:', res.error);
+                }
+
+                setVenueProgress({ done: Math.min(i + batchSize, imgFiles.length), total: imgFiles.length, current: '' });
+            }
+
+            setNotification({ title: '提取完成', message: `已处理 ${imgFiles.length} 张截图，请检查规则内容并保存。`, type: 'success' });
+        } catch (err) {
+            console.error(err);
+            setNotification({ title: '提取出错', message: err.message || '未知错误', type: 'error' });
+        } finally {
+            setVenueExtracting(false);
+            setVenueProgress({ done: 0, total: 0, current: '' });
+        }
+    };
+
+    const handleSaveVenue = async () => {
+        if (!venueDraft.name.trim()) {
+            setNotification({ title: '提示', message: '请填写场馆名称', type: 'error' });
+            return;
+        }
+        if (!activeVenueId) return;
+        setVenueSaveStatus('saving');
+        try {
+            const updated = await window.fbOps.saveVenueRules({
+                id: activeVenueId,
+                name: venueDraft.name.trim(),
+                rules: venueDraft.rules || '',
+                imageCount: venueDraft.imageCount || 0
+            });
+            setVenueRules(updated || []);
+            buildStaticCache(scripts, allTemplates, chatKnowledge, annKnowledge, updated || []);
+            setVenueSaveStatus('success');
+            setTimeout(() => setVenueSaveStatus('idle'), 1600);
+        } catch (err) {
+            setNotification({ title: '保存失败', message: err.message, type: 'error' });
+            setVenueSaveStatus('idle');
+        }
+    };
+
+
     const uniqueCategories = useMemo(() => [...new Set(scripts.map(s => String(s.category || '').trim()).filter(c => c))], [scripts]);
     const filteredScripts = useMemo(() => scripts.filter(s => { const term = searchTerm.toLowerCase(); const kw = String(s.keywords || '').toLowerCase(); const ct = String(s.content || '').toLowerCase(); const cat = String(s.category || '').toLowerCase(); const matchesSearch = !term || kw.includes(term) || ct.includes(term) || cat.includes(term); const matchesCategory = !selectedCategory || s.category === selectedCategory; return matchesSearch && matchesCategory; }), [searchTerm, scripts, selectedCategory]);
     const fuse = useMemo(() => { if (typeof Fuse === 'undefined') return null; return new Fuse(images, { keys: ['title', 'tags'], threshold: 0.4 }); }, [images]);
@@ -923,6 +1107,165 @@ function App() {
         {showBackupConfirm && <GeneralConfirmModal title="确认备份" message="确定要下载所有数据库数据(JSON)到本地吗？" onConfirm={confirmDownloadBackup} onCancel={() => setShowBackupConfirm(false)} type="info" confirmText="确认下载" />}
         {showDebugModal && lastDebugInfo && <DebugModal data={lastDebugInfo} onClose={() => setShowDebugModal(false)} />}
         {showTrackerModal && <TrackerModal isOpen={showTrackerModal} onClose={() => { setShowTrackerModal(false); setHasUnreadUpdates(false); }} tickets={trackedTickets} onDelete={handleDeleteTracked} isRefreshing={isTrackerRefreshing} trackerMsg={trackerMsg} />}
+
+        {/* ===== 场馆规则库 弹窗 ===== */}
+        {showVenueModal && (
+            <div className="venue-modal-overlay" onClick={() => setShowVenueModal(false)}>
+                <div className="venue-modal" onClick={e => e.stopPropagation()}>
+                    <div className="venue-modal-head">
+                        <div className="venue-modal-title">
+                            <Icon d={PATHS.Shield} className="w-5 h-5"/>
+                            <span>场馆规则库</span>
+                            <span className="ml-2 text-[10px] font-medium bg-white/20 px-2 py-0.5 rounded-full">AI 自动识图提取</span>
+                        </div>
+                        <button onClick={() => setShowVenueModal(false)} className="venue-modal-close">
+                            <Icon d={PATHS.Close} className="w-4 h-4"/>
+                        </button>
+                    </div>
+                    <div className="venue-modal-body">
+                        <aside className="venue-sidebar">
+                            <div className="venue-sidebar-head">
+                                <span className="venue-sidebar-title">
+                                    <Icon d={PATHS.Database} className="w-3.5 h-3.5"/>场馆 ({venueRules.length})
+                                </span>
+                                <button onClick={handleCreateVenue} className="venue-add-btn">
+                                    <Icon d={PATHS.Plus} className="w-3 h-3"/>新建
+                                </button>
+                            </div>
+                            <div className="venue-list custom-scrollbar">
+                                {venueRules.length === 0 && !activeVenueId && (
+                                    <div className="text-center text-[11px] text-slate-400 py-6 px-2">
+                                        点击右上角"新建"创建第一个场馆
+                                    </div>
+                                )}
+                                {activeVenueId && !venueRules.find(v => v.id === activeVenueId) && (
+                                    <div className="venue-item active">
+                                        <div className="venue-item-name">
+                                            <span className="truncate">{venueDraft.name || '新场馆（未保存）'}</span>
+                                        </div>
+                                        <div className="venue-item-meta">
+                                            <span>● 未保存</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {venueRules.map(v => (
+                                    <div key={v.id}
+                                         onClick={() => handleSelectVenue(v)}
+                                         className={`venue-item ${activeVenueId === v.id ? 'active' : ''}`}>
+                                        <div className="venue-item-name">
+                                            <span className="truncate">{v.name || '未命名'}</span>
+                                            <span className="venue-item-del" onClick={(e) => handleDeleteVenue(v.id, e)}>
+                                                <Icon d={PATHS.Trash} className="w-3.5 h-3.5"/>
+                                            </span>
+                                        </div>
+                                        <div className="venue-item-meta">
+                                            <span>{v.imageCount || 0} 张截图</span>
+                                            <span>·</span>
+                                            <span>{(v.rules || '').length} 字</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+                        <section className="venue-content">
+                            {!activeVenueId ? (
+                                <div className="venue-content-empty">
+                                    <Icon d={PATHS.Shield} className="w-10 h-10 opacity-40"/>
+                                    <div className="font-bold text-sm text-slate-500">选择左侧场馆开始编辑</div>
+                                    <div className="text-xs text-slate-400">或点击「新建」创建新场馆</div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="venue-content-head">
+                                        <input
+                                            value={venueDraft.name}
+                                            onChange={(e) => setVenueDraft({...venueDraft, name: e.target.value})}
+                                            placeholder="输入场馆名称，例如：沙巴体育 / BBIN真人 / PT电子..."
+                                            className="venue-name-input"/>
+                                        <div className="text-[11px] text-slate-400 shrink-0">
+                                            已整理 {venueDraft.imageCount} 张 · {(venueDraft.rules || '').length} 字
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        className={`venue-dropzone ${venueDragging ? 'dragging' : ''} ${venueExtracting ? 'pointer-events-none opacity-70' : ''}`}
+                                        onClick={() => !venueExtracting && venueFileInputRef.current?.click()}
+                                        onDragOver={(e) => { e.preventDefault(); setVenueDragging(true); }}
+                                        onDragLeave={() => setVenueDragging(false)}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setVenueDragging(false);
+                                            if (!venueExtracting) handleVenueImagesUpload(e.dataTransfer.files);
+                                        }}>
+                                        <div className="venue-dropzone-icon">
+                                            <Icon d={PATHS.Image} className="w-5 h-5"/>
+                                        </div>
+                                        <div className="venue-dropzone-text">
+                                            {venueDragging ? '松开即可上传' : '点击或拖拽图片上传（支持批量）'}
+                                        </div>
+                                        <div className="venue-dropzone-hint">
+                                            支持 JPG / PNG / WebP，可一次上传几十张，AI 会自动提取规则条款
+                                        </div>
+                                        <input
+                                            ref={venueFileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            style={{display: 'none'}}
+                                            onChange={(e) => {
+                                                handleVenueImagesUpload(e.target.files);
+                                                e.target.value = '';
+                                            }}/>
+                                    </div>
+
+                                    {venueExtracting && (
+                                        <div className="venue-progress">
+                                            <div className="spinner" style={{width: 18, height: 18, borderWidth: 2, borderColor: '#c4b5fd', borderTopColor: '#6366f1'}}></div>
+                                            <div className="venue-progress-bar">
+                                                <div
+                                                    className="venue-progress-fill"
+                                                    style={{width: `${venueProgress.total > 0 ? (venueProgress.done / venueProgress.total * 100) : 0}%`}}></div>
+                                            </div>
+                                            <div className="venue-progress-text">
+                                                {venueProgress.done}/{venueProgress.total} 张
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="venue-rules-wrap">
+                                        <div className="venue-rules-label">
+                                            <Icon d={PATHS.Edit} className="w-3 h-3"/>规则内容（可人工编辑）
+                                        </div>
+                                        <textarea
+                                            value={venueDraft.rules}
+                                            onChange={(e) => setVenueDraft({...venueDraft, rules: e.target.value})}
+                                            placeholder="上传截图后，AI 提取的规则会累积在这里。你也可以直接手动编辑 / 补充。"
+                                            className="venue-rules-textarea custom-scrollbar"/>
+                                        <div className="venue-save-row">
+                                            <button
+                                                onClick={handleSaveVenue}
+                                                disabled={venueSaveStatus === 'saving' || !venueDraft.name.trim()}
+                                                className="venue-save-btn">
+                                                {venueSaveStatus === 'saving' ? (
+                                                    <>
+                                                        <div className="spinner" style={{width: 14, height: 14, borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', borderTopColor: '#fff'}}></div>
+                                                        保存中...
+                                                    </>
+                                                ) : venueSaveStatus === 'success' ? (
+                                                    <><Icon d={PATHS.Check} className="w-4 h-4"/>已保存</>
+                                                ) : (
+                                                    <><Icon d={PATHS.Save} className="w-4 h-4"/>保存场馆规则</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </section>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* 账号管理弹窗 */}
         {showAccountModal && (
@@ -1073,6 +1416,13 @@ function App() {
 
               <button onClick={handleDownloadBackup} className="tool-btn accent-sky hidden md:inline-flex"><Icon d={PATHS.Download} className="w-3 h-3"/> <span>数据备份</span></button>
               {userRole === 'admin' && <button onClick={() => setActiveTab('data_management')} className={`tool-btn accent-emerald hidden md:inline-flex ${activeTab === 'data_management' ? 'active' : ''}`}><Icon d={PATHS.Database} className="w-3 h-3"/> <span>数据管理</span></button>}
+
+              <button onClick={openVenueModal} className="tool-btn accent-violet hidden md:inline-flex relative">
+                  <Icon d={PATHS.Shield} className="w-3 h-3"/> <span>场馆规则</span>
+                  {venueRules.length > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-violet-500 text-white text-[9px] font-bold rounded-full border-2 border-white flex items-center justify-center">{venueRules.length}</span>
+                  )}
+              </button>
 
               <button onClick={() => { setShowTrackerModal(true); setHasUnreadUpdates(false); }} className="tool-btn accent-amber relative">
                   <Icon d={PATHS.Eye} className="w-3 h-3"/> <span>监控</span>
