@@ -45,6 +45,10 @@ const callGeminiStream = async (messages, temp = 0.4, onChunk, mode = MODE_FAST,
             return { error: `Server Error: ${response.status} - ${errText}` };
         }
 
+        const cacheAction = response.headers.get('X-Cache-Action') || 'unknown';
+        const cacheModel = response.headers.get('X-Cache-Model') || '';
+        const thinkingLevel = response.headers.get('X-Cache-Thinking') || '';
+
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
@@ -91,7 +95,7 @@ const callGeminiStream = async (messages, temp = 0.4, onChunk, mode = MODE_FAST,
                 }
             }
         }
-        return { success: true, data: fullText, usage: finalUsage };
+        return { success: true, data: fullText, usage: finalUsage, cacheAction, cacheModel, thinkingLevel };
     } catch (e) { return { error: "连接异常: " + e.message }; }
 };
 
@@ -115,6 +119,10 @@ const callGeminiJSON = async (messages, temp = 0.3, mode = MODE_FAST) => {
             return { error: `Server Error: ${response.status} - ${errText}` };
         }
 
+        const cacheAction = response.headers.get('X-Cache-Action') || 'unknown';
+        const cacheModel = response.headers.get('X-Cache-Model') || '';
+        const thinkingLevel = response.headers.get('X-Cache-Thinking') || '';
+
         const data = await response.json();
         let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("Empty response from backend");
@@ -126,6 +134,6 @@ const callGeminiJSON = async (messages, temp = 0.3, mode = MODE_FAST) => {
             rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
         }
 
-        return { success: true, data: JSON.parse(rawText), usage: data.usageMetadata };
+        return { success: true, data: JSON.parse(rawText), usage: data.usageMetadata, cacheAction, cacheModel, thinkingLevel };
     } catch (e) { return { error: "JSON解析失败: " + e.message }; }
 };

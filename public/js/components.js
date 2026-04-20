@@ -45,21 +45,61 @@ function LoginScreen({ onLogin }) {
     );
 }
 
-function StatusBar({ usage }) {
+function StatusBar({ usage, cacheMeta }) {
+    // 缓存命中权威信号: usageMetadata.cachedContentTokenCount > 0
+    // 服务端动作信号: cacheMeta.action (hit / created / skipped / failed)
+    const cached = usage && usage.cachedContentTokenCount > 0;
+    const action = cacheMeta?.action;
+
+    let badge;
+    if (cached || action === 'hit') {
+        badge = (
+            <span className="cache-badge cache-badge--hit" title={`缓存命中 · 省下 ${usage?.cachedContentTokenCount || 0} token`}>
+                <span className="cache-badge-dot" />
+                <svg viewBox="0 0 20 20" fill="currentColor" className="cache-badge-icon"><path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3.5-3.5a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd"/></svg>
+                <span>缓存已命中</span>
+            </span>
+        );
+    } else if (action === 'created') {
+        badge = (
+            <span className="cache-badge cache-badge--created" title="本次刚创建长效缓存，下次起按 25% 价计费">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="cache-badge-icon"><path d="M10 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z"/></svg>
+                <span>缓存已建立</span>
+            </span>
+        );
+    } else if (action === 'failed') {
+        badge = (
+            <span className="cache-badge cache-badge--failed" title="缓存创建失败或远端已失效，本次走全量">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="cache-badge-icon"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.7 7.3a1 1 0 011.4 0L10 8l.7-.7a1 1 0 111.4 1.4L11.4 10l.7.7a1 1 0 11-1.4 1.4L10 11.4l-.7.7a1 1 0 11-1.4-1.4L8.6 10l-.7-.7a1 1 0 010-1.4z" clipRule="evenodd"/></svg>
+                <span>未命中缓存</span>
+            </span>
+        );
+    } else if (action === 'skipped') {
+        badge = (
+            <span className="cache-badge cache-badge--skipped" title="系统 prompt 不足 2000 字，本次未启用缓存">
+                <span>短 prompt</span>
+            </span>
+        );
+    } else {
+        badge = <span className="cache-badge cache-badge--idle">待机</span>;
+    }
+
     return (
         <div className="status-bar">
             <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                <span className="text-slate-400">运行正常</span>
-                {usage && usage.cachedContentTokenCount > 0 ? (
-                    <span className="bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded">快速模式</span>
-                ) : (
-                    <span className="bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded">标准模式</span>
+                {badge}
+                {cacheMeta?.model && (
+                    <span className="status-model-pill" title={`推理档位: ${cacheMeta.thinkingLevel || '-'}`}>
+                        {cacheMeta.model.replace('gemini-', 'g-')} · {cacheMeta.thinkingLevel || '-'}
+                    </span>
                 )}
                 {usage && (
                     <div className="flex items-center gap-2 ml-2 border-l pl-2 border-slate-200 font-mono">
                         <span className="text-slate-500" title="输入Token">In: <span className="font-bold">{usage.promptTokenCount || 0}</span></span>
                         {usage.cachedContentTokenCount > 0 ? (
-                            <span className="text-zinc-500 bg-zinc-50 px-1 rounded border border-zinc-200" title="缓存Token">Cache: <span className="font-bold">{usage.cachedContentTokenCount}</span></span>
+                            <span className="text-emerald-700 bg-emerald-50 px-1.5 rounded border border-emerald-200" title="缓存 Token（按 25% 折扣计费）">
+                                Cache: <span className="font-bold">{usage.cachedContentTokenCount}</span>
+                            </span>
                         ) : (
                             <span className="text-slate-300" title="本次未命中缓存">Cache: 0</span>
                         )}

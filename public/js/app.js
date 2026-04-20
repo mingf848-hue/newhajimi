@@ -46,6 +46,7 @@ function App() {
     const [isTemplateMode, setIsTemplateMode] = useState(false);
     const [allTemplates, setAllTemplates] = useState([]);
     const [lastUsage, setLastUsage] = useState(null);
+    const [lastCacheMeta, setLastCacheMeta] = useState(null); // { action, model, thinkingLevel }
     const [viewTemplate, setViewTemplate] = useState(null); 
     const [isEditingTemplate, setIsEditingTemplate] = useState(false);
     const [templateForm, setTemplateForm] = useState({ id: null, type: '', front: '', inner: '', mail: '' });
@@ -399,6 +400,7 @@ function App() {
           
           if(res.error) throw new Error(res.error);
           if (res.usage) setLastUsage(res.usage);
+          if (res.cacheAction) setLastCacheMeta({ action: res.cacheAction, model: res.cacheModel, thinkingLevel: res.thinkingLevel });
 
           if (res.data) {
               if (res.data.thought) {
@@ -666,6 +668,7 @@ function App() {
 
            if (res.error) setAiReply("AI Error: " + res.error);
            if (res.usage) setLastUsage(res.usage);
+          if (res.cacheAction) setLastCacheMeta({ action: res.cacheAction, model: res.cacheModel, thinkingLevel: res.thinkingLevel });
            
            setAiPhase('');
            setAiLoading(false);
@@ -2076,7 +2079,7 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
               <BetQuery />
           )}
          </main>
-         <StatusBar usage={lastUsage} />
+         <StatusBar usage={lastUsage} cacheMeta={lastCacheMeta} />
       </div>
     );
 }
