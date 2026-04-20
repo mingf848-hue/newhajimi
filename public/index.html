@@ -119,7 +119,13 @@
                 await window.fbOps.apiCall('DELETE', `/api/db/images/${id}`);
                 return await window.fbOps.getImages();
             },
-            migrateImagesToMongoDB: async () => window.fbOps.apiCall('POST', '/api/migrate-images', {}),
+            migrateImagesToMongoDB: async () => {
+                const res = await fetch('/api/migrate-images', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+                });
+                if (!res.ok) throw new Error(await res.text());
+                return await res.json();
+            },
 
             getTemplates: async () => window.fbOps.apiCall('GET', '/api/db/templates'),
             getCustomVars: async () => { try { const d = await window.fbOps.apiCall('GET', '/api/db/global_settings/template_vars'); return d ? (d.vars || []) : []; } catch(e) { return []; } },
