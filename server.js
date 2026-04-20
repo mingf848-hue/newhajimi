@@ -284,7 +284,19 @@ app.post('/api/gemini', async (req, res) => {
                             modelCache.expireTime = createData.expireTime || null;
                             console.log(`[Auto-Cache] ✅ 缓存创建成功! 模型: ${TARGET_MODEL}, ID: ${modelCache.id}`);
                             persistCachePool(TARGET_MODEL);
-                            if (oldId && oldId !== modelCache.id) deleteRemoteCache(API_KEY, oldId);
+                            // 新缓存建好后立即清理 Google 侧全部孤儿（含历史积累）
+                            const activeId = modelCache.id;
+                            fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`)
+                                .then(r => r.json())
+                                .then(({ cachedContents = [] }) => Promise.all(
+                                    cachedContents
+                                        .filter(c => c.name !== activeId)
+                                        .map(c => fetch(`https://generativelanguage.googleapis.com/v1beta/${c.name}?key=${API_KEY}`, { method: 'DELETE' })
+                                            .then(() => console.log(`[Auto-Cache] 🗑️  清理孤儿: ${c.name}`))
+                                            .catch(() => {})
+                                        )
+                                ))
+                                .catch(e => console.warn('[Auto-Cache] 孤儿清理失败:', e.message));
                             return 'created';
                         }
                         if (createData.error) {
