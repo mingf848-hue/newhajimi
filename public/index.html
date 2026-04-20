@@ -34,22 +34,8 @@
     };
   </script>
 
-  <!-- Firebase 模块初始化 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCFX_coAa6O_INyh_5uwkLtkfep2VehJxc",
-      authDomain: "hajimi-assistant.firebaseapp.com",
-      projectId: "hajimi-assistant",
-      storageBucket: "hajimi-assistant.firebasestorage.app",
-      messagingSenderId: "915974880846",
-      appId: "1:915974880846:web:cf8b304605b1c892b68d1f",
-      measurementId: "G-2H3YST6145"
-    };
-
+  <!-- 后端 API 封装 -->
+  <script>
     window.safeStringify = (obj, indent = 2) => {
         const cache = new Set();
         return JSON.stringify(obj, (key, value) => {
@@ -61,14 +47,7 @@
         }, indent);
     };
 
-    try {
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        signInAnonymously(auth).catch(() => {});
-        window.storage = getStorage(app);
-
-        // 将所有与数据库的交互全部挂载在 window.fbOps 下面供 React 组件使用
-        window.fbOps = {
+    window.fbOps = {
             apiCall: async (method, path, body = null) => {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); 
@@ -124,14 +103,6 @@
                 await window.fbOps.apiCall('DELETE', `/api/db/images/${id}`);
                 return await window.fbOps.getImages();
             },
-            migrateImagesToMongoDB: async () => {
-                const res = await fetch('/api/migrate-images', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
-                });
-                if (!res.ok) throw new Error(await res.text());
-                return await res.json();
-            },
-
             getTemplates: async () => window.fbOps.apiCall('GET', '/api/db/templates'),
             getCustomVars: async () => { try { const d = await window.fbOps.apiCall('GET', '/api/db/global_settings/template_vars'); return d ? (d.vars || []) : []; } catch(e) { return []; } },
             addCustomVar: async (v) => { try { const d = await window.fbOps.apiCall('GET', '/api/db/global_settings/template_vars'); let vars = d ? (d.vars || []) : []; if(!vars.includes(v)) { vars.push(v); await window.fbOps.apiCall('POST', '/api/db/global_settings', { id: 'template_vars', vars }); } return vars; } catch(e) { return []; } },
@@ -232,9 +203,6 @@
             }
         };
 
-        window.firebaseLoaded = true;
-        if(window.onFirebaseReady) window.onFirebaseReady();
-    } catch(err) { console.error("Init Error", err); }
   </script>
 
   <!-- 脚本合并运行机制 -->

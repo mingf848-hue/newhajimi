@@ -153,7 +153,7 @@ function App() {
 
     const loadData = async () => {
         try {
-            if (!window.fbOps) throw new Error("Firebase Ops not loaded");
+            if (!window.fbOps) throw new Error("fbOps not loaded");
             const user = localStorage.getItem(SESSION_KEY_USER);
             const data = await window.UtilsLib.loadDataInParallel(window.fbOps, user);
 
@@ -282,7 +282,6 @@ function App() {
                     const role = localStorage.getItem(SESSION_KEY_ROLE);
                     if(user) { setCurrentUser(user); setUserRole(role||'user'); }
                     setIsAuthorized(true);
-                    await waitForFirebase();
                     await loadData();
                } else { 
                     setIsAuthorized(false); 
@@ -773,24 +772,7 @@ function App() {
         window.addEventListener('paste', handlePaste);
         return () => window.removeEventListener('paste', handlePaste);
     }, [showImageModal]);
-    const handleMigrateImages = async () => {
-        if (!window.confirm('将把所有 Firebase 图片下载并存入 MongoDB，完成后图片链接将切换为本地地址。继续？')) return;
-        setUploading(true);
-        try {
-            const r = await window.fbOps.migrateImagesToMongoDB();
-            let extra = '';
-            if (r.migrated === 0 && r.skippedSamples?.length) {
-                extra = '\n\n跳过样本 URL：\n' + r.skippedSamples.map(s => `- ${s.url}${s.hasImageData ? ' (已迁移)' : ''}`).join('\n');
-            }
-            if (r.failedSamples?.length) {
-                extra += '\n\n失败样本：\n' + r.failedSamples.map(s => `- ${s.url} (${s.status || s.error})`).join('\n');
-            }
-            setNotification({ title: '迁移完成', message: `成功: ${r.migrated}，跳过: ${r.skipped}，失败: ${r.failed}${extra}`, type: 'success' });
-            setImages(await window.fbOps.getImages());
-        } catch (e) { setNotification({ title: '迁移失败', message: e.message, type: 'error' }); }
-        setUploading(false);
-    };
-    const handleUploadImage = async () => { updateActivity(); if (!imageForm.file || !imageForm.tags) return setNotification({title: '提示', message: '请选择图片并填写标签', type: 'error'}); setUploading(true); try { await window.fbOps.uploadImage(imageForm.file, imageForm.title || 'img', imageForm.tags); const i = await window.fbOps.getImages(); setImages(i); setShowImageModal(false); } catch (e) { setNotification({title: '上传失败', message: e.message, type: 'error'}); } setUploading(false); };
+const handleUploadImage = async () => { updateActivity(); if (!imageForm.file || !imageForm.tags) return setNotification({title: '提示', message: '请选择图片并填写标签', type: 'error'}); setUploading(true); try { await window.fbOps.uploadImage(imageForm.file, imageForm.title || 'img', imageForm.tags); const i = await window.fbOps.getImages(); setImages(i); setShowImageModal(false); } catch (e) { setNotification({title: '上传失败', message: e.message, type: 'error'}); } setUploading(false); };
     const handleDelete = async (type, item) => { updateActivity(); if (type === 'script' && userRole !== 'admin') { setShowPermissionModal(true); return; } setPendingDelete({ type, item }); setShowDeleteModal(true); };
     
     const handleLikeMsg = async (idx) => { 
@@ -1999,7 +1981,7 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
             <section className="absolute inset-0 flex flex-col bg-slate-100">
                 <div className="bg-white p-3 md:p-4 border-b border-zinc-200 flex flex-col md:flex-row gap-3 items-center shadow-sm z-10 shrink-0">
                     <div className="relative w-full md:flex-1 md:max-w-xl"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search}/></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索图片..." className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm outline-none" /></div>
-                    <div className="flex w-full md:w-auto items-center gap-2 text-sm justify-between"><button onClick={openAddImage} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg py-2">上传图片</button>{userRole === 'admin' && <button onClick={handleMigrateImages} disabled={uploading} className="hidden md:block px-3 bg-amber-600 text-white text-xs font-bold rounded-lg py-2">{uploading ? '迁移中...' : '迁移旧图片'}</button>}</div>
+                    <div className="flex w-full md:w-auto items-center gap-2 text-sm justify-between"><button onClick={openAddImage} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg py-2">上传图片</button></div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 md:p-4 relative">
                     {images.length === 0 && !loading && (<div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs"><Icon d={PATHS.Image} className="w-8 h-8 mb-2 opacity-50"/>暂无图片数据</div>)}
