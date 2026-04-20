@@ -1268,6 +1268,17 @@ html, body {
   color: #94a3b8;
   border-color: #e2e8f0;
 }
+.cache-badge--clickable {
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
+}
+.cache-badge--clickable:hover {
+  filter: brightness(1.12);
+  transform: scale(1.04);
+}
+.cache-badge--clickable:active {
+  transform: scale(0.97);
+}
 .status-model-pill {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;

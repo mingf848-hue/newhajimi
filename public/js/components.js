@@ -45,26 +45,35 @@ function LoginScreen({ onLogin }) {
     );
 }
 
-function StatusBar({ usage, cacheMeta }) {
+function StatusBar({ usage, cacheMeta, onCleanup }) {
+    const [cleaning, setCleaning] = React.useState(false);
     // 缓存命中权威信号: usageMetadata.cachedContentTokenCount > 0
     // 服务端动作信号: cacheMeta.action (hit / created / skipped / failed)
     const cached = usage && usage.cachedContentTokenCount > 0;
     const action = cacheMeta?.action;
+    const isActive = cached || action === 'hit' || action === 'created';
+
+    const handleClick = async () => {
+        if (!onCleanup || cleaning) return;
+        setCleaning(true);
+        await onCleanup();
+        setCleaning(false);
+    };
 
     let badge;
     if (cached || action === 'hit') {
         badge = (
-            <span className="cache-badge cache-badge--hit" title={`缓存命中 · 省下 ${usage?.cachedContentTokenCount || 0} token`}>
+            <span className="cache-badge cache-badge--hit cache-badge--clickable" onClick={handleClick} title="缓存已命中 · 点击清理历史孤儿缓存">
                 <span className="cache-badge-dot" />
                 <svg viewBox="0 0 20 20" fill="currentColor" className="cache-badge-icon"><path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-3.5-3.5a1 1 0 111.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd"/></svg>
-                <span>缓存已命中</span>
+                <span>{cleaning ? '清理中…' : '缓存已命中'}</span>
             </span>
         );
     } else if (action === 'created') {
         badge = (
-            <span className="cache-badge cache-badge--created" title="本次刚创建长效缓存，下次起按 25% 价计费">
+            <span className="cache-badge cache-badge--created cache-badge--clickable" onClick={handleClick} title="缓存已建立 · 点击清理历史孤儿缓存">
                 <svg viewBox="0 0 20 20" fill="currentColor" className="cache-badge-icon"><path d="M10 2a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H3a1 1 0 110-2h6V3a1 1 0 011-1z"/></svg>
-                <span>缓存已建立</span>
+                <span>{cleaning ? '清理中…' : '缓存已建立'}</span>
             </span>
         );
     } else if (action === 'failed') {

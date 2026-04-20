@@ -159,6 +159,36 @@ app.post('/api/update-cache', async (req, res) => {
 });
 
 // ==========================================
+// --- 孤儿缓存清理 API ---
+app.post('/api/cleanup-caches', async (req, res) => {
+    try {
+        const API_KEY = process.env.GEMINI_API_KEY;
+        if (!API_KEY) return res.status(500).json({ error: 'No API Key' });
+
+        const activeId = cachePool['gemini-3.1-flash-lite-preview']?.id || null;
+
+        // 列出 Google 侧全部缓存
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`);
+        const listData = await listRes.json();
+        const all = listData.cachedContents || [];
+
+        let deleted = 0, kept = 0, failed = 0;
+        await Promise.all(all.map(async (c) => {
+            if (c.name === activeId) { kept++; return; }
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${c.name}?key=${API_KEY}`, { method: 'DELETE' });
+                if (r.ok || r.status === 404) deleted++;
+                else { failed++; console.warn(`[Cleanup] 删除失败(${r.status}): ${c.name}`); }
+            } catch (e) { failed++; }
+        }));
+
+        console.log(`[Cleanup] 完成: 删除 ${deleted}, 保留 ${kept}, 失败 ${failed}`);
+        res.json({ success: true, deleted, kept, failed, activeId });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- Gemini Proxy 代码 ---
 // ==========================================
 
