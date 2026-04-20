@@ -99,18 +99,27 @@
             saveKnowledge: async (k) => window.fbOps.apiCall('POST', '/api/db/knowledge_base', k),
             
             getImages: async () => window.fbOps.apiCall('GET', '/api/db/images'),
-            uploadImage: async (file, title, tags) => { 
-                const storageRef = ref(window.storage, 'images/' + Date.now() + '_' + file.name); 
-                await uploadBytes(storageRef, file); 
-                const url = await getDownloadURL(storageRef); 
-                await window.fbOps.apiCall('POST', '/api/db/images', { title, tags, url, storagePath: storageRef.fullPath, time: new Date().toISOString() }); 
-                return await window.fbOps.getImages(); 
+            uploadImage: async (file, title, tags) => {
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                await window.fbOps.apiCall('POST', '/api/upload-image', {
+                    imageData: base64,
+                    mimeType: file.type || 'image/jpeg',
+                    title,
+                    tags,
+                    time: new Date().toISOString()
+                });
+                return await window.fbOps.getImages();
             },
-            deleteImage: async (id, storagePath) => { 
-                await window.fbOps.apiCall('DELETE', `/api/db/images/${id}`); 
-                if(storagePath) { try { await deleteObject(ref(window.storage, storagePath)); } catch(e) {} } 
-                return await window.fbOps.getImages(); 
+            deleteImage: async (id) => {
+                await window.fbOps.apiCall('DELETE', `/api/db/images/${id}`);
+                return await window.fbOps.getImages();
             },
+            migrateImagesToMongoDB: async () => window.fbOps.apiCall('POST', '/api/migrate-images', {}),
 
             getTemplates: async () => window.fbOps.apiCall('GET', '/api/db/templates'),
             getCustomVars: async () => { try { const d = await window.fbOps.apiCall('GET', '/api/db/global_settings/template_vars'); return d ? (d.vars || []) : []; } catch(e) { return []; } },
