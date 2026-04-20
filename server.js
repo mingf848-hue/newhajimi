@@ -148,6 +148,77 @@ app.delete('/api/db/:collection/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ==========================================
+// --- 图片存储 API (MongoDB) ---
+// ==========================================
+
+// 上传图片到 MongoDB
+app.post('/api/upload-image', async (req, res) => {
+    try {
+        const { imageData, mimeType, title, tags, time } = req.body;
+        if (!imageData || !tags) return res.status(400).json({ error: '缺少图片数据或标签' });
+        const ImageModel = getModel('images');
+        const id = new mongoose.Types.ObjectId().toString();
+        await ImageModel.create({
+            _id: id,
+            title: title || '',
+            tags,
+            url: `/api/images/${id}`,
+            storagePath: null,
+            imageData,
+            mimeType: mimeType || 'image/jpeg',
+            time: time || new Date().toISOString()
+        });
+        res.json({ success: true, id, url: `/api/images/${id}` });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 从 MongoDB 读取图片二进制
+app.get('/api/images/:id', async (req, res) => {
+    try {
+        const doc = await getModel('images').findById(req.params.id).lean();
+        if (!doc || !doc.imageData) return res.status(404).json({ error: '图片不存在' });
+        const buf = Buffer.from(doc.imageData, 'base64');
+        res.set('Content-Type', doc.mimeType || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=31536000');
+        res.send(buf);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 迁移旧 Firebase 图片到 MongoDB
+app.post('/api/migrate-images', async (req, res) => {
+    try {
+        const ImageModel = getModel('images');
+        const docs = await ImageModel.find({}).lean();
+        let migrated = 0, skipped = 0, failed = 0;
+        for (const doc of docs) {
+            // 跳过已迁移的（url 指向本地或没有 Firebase URL）
+            if (!doc.url || !doc.url.includes('firebasestorage')) { skipped++; continue; }
+            // 跳过已有 imageData 的
+            if (doc.imageData) { skipped++; continue; }
+            try {
+                const resp = await fetch(doc.url);
+                if (!resp.ok) { failed++; continue; }
+                const buffer = await resp.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                const ct = resp.headers.get('content-type') || 'image/jpeg';
+                const mimeType = ct.split(';')[0].trim();
+                const id = doc._id.toString();
+                await ImageModel.findByIdAndUpdate(id, {
+                    $set: {
+                        imageData: base64,
+                        mimeType,
+                        url: `/api/images/${id}`,
+                        storagePath: null
+                    }
+                });
+                migrated++;
+            } catch (e) { failed++; }
+        }
+        res.json({ success: true, migrated, skipped, failed, total: docs.length });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // --- 大模型缓存更新 API ---
 app.post('/api/update-cache', async (req, res) => {
     try {

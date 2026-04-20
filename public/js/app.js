@@ -762,6 +762,16 @@ function App() {
     const handleSaveCloudPrompts = (type) => { setSaveConfirmType(type); };
     const handleSaveScript = async () => { updateActivity(); if (!scriptForm.content) return setNotification({title: '提示', message: '内容不能为空', type: 'error'}); setSaveStatus('saving'); try { await window.fbOps.saveScript(scriptForm); const s = await window.fbOps.getScripts(); setScripts(s); setShowScriptModal(false); setSaveStatus('success'); setTimeout(() => setSaveStatus('idle'), 2000); await loadData(); } catch (e) { setNotification({title: '保存失败', message: e.message, type: 'error'}); setSaveStatus('idle'); } };
     const openAddImage = () => { updateActivity(); setImageForm({ file: null, preview: null, title: '', tags: '' }); setShowImageModal(true); };
+    const handleMigrateImages = async () => {
+        if (!window.confirm('将把所有 Firebase 图片下载并存入 MongoDB，完成后图片链接将切换为本地地址。继续？')) return;
+        setUploading(true);
+        try {
+            const r = await window.fbOps.migrateImagesToMongoDB();
+            setNotification({ title: '迁移完成', message: `成功: ${r.migrated}，跳过: ${r.skipped}，失败: ${r.failed}`, type: 'success' });
+            setImages(await window.fbOps.getImages());
+        } catch (e) { setNotification({ title: '迁移失败', message: e.message, type: 'error' }); }
+        setUploading(false);
+    };
     const handleUploadImage = async () => { updateActivity(); if (!imageForm.file || !imageForm.tags) return setNotification({title: '提示', message: '请选择图片并填写标签', type: 'error'}); setUploading(true); try { await window.fbOps.uploadImage(imageForm.file, imageForm.title || 'img', imageForm.tags); const i = await window.fbOps.getImages(); setImages(i); setShowImageModal(false); } catch (e) { setNotification({title: '上传失败', message: e.message, type: 'error'}); } setUploading(false); };
     const handleDelete = async (type, item) => { updateActivity(); if (type === 'script' && userRole !== 'admin') { setShowPermissionModal(true); return; } setPendingDelete({ type, item }); setShowDeleteModal(true); };
     
@@ -809,7 +819,7 @@ function App() {
     const startEdit = (s) => { updateActivity(); setScriptForm(s); setShowScriptModal(true); };
     const openAddScript = () => { updateActivity(); setScriptForm({ id: 'new_', category: '', keywords: '', content: '' }); setShowScriptModal(true); };
     const cancelEdit = () => { setShowScriptModal(false); setScriptForm({ id: '', category: '', keywords: '', content: '' }); };
-    const executeDelete = async () => { if (!pendingDelete) return; const { type, id, item } = pendingDelete; setLoading(true); try { if (type === 'template') { const updatedTemplates = await window.fbOps.deleteTemplate(id); setAllTemplates(updatedTemplates); await buildStaticCache(scripts, updatedTemplates); if (templateForm.id === id) { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setViewTemplate(null); setIsEditingTemplate(false); } } else if (type === 'script') { await window.fbOps.deleteScript(item.id); setScripts(await window.fbOps.getScripts()); await loadData(); } else if (type === 'image') { await window.fbOps.deleteImage(item.id, item.storagePath); setImages(await window.fbOps.getImages()); } else if (type === 'chat_log') { setChatLogs(await window.fbOps.deleteTrainingData(id)); } else if (type === 'ann_log') { setAnnLogs(await window.fbOps.deleteAnnLog(id)); } setNotification({ title: "删除成功", message: "已永久删除。", type: "success" }); } catch(e) { setNotification({title: '删除失败', message: '操作未能完成', type: 'error'}); } setLoading(false); setShowDeleteModal(false); setPendingDelete(null); };
+    const executeDelete = async () => { if (!pendingDelete) return; const { type, id, item } = pendingDelete; setLoading(true); try { if (type === 'template') { const updatedTemplates = await window.fbOps.deleteTemplate(id); setAllTemplates(updatedTemplates); await buildStaticCache(scripts, updatedTemplates); if (templateForm.id === id) { setTemplateForm({ id: null, type: '', front: '', inner: '', mail: '' }); setViewTemplate(null); setIsEditingTemplate(false); } } else if (type === 'script') { await window.fbOps.deleteScript(item.id); setScripts(await window.fbOps.getScripts()); await loadData(); } else if (type === 'image') { await window.fbOps.deleteImage(item.id); setImages(await window.fbOps.getImages()); } else if (type === 'chat_log') { setChatLogs(await window.fbOps.deleteTrainingData(id)); } else if (type === 'ann_log') { setAnnLogs(await window.fbOps.deleteAnnLog(id)); } setNotification({ title: "删除成功", message: "已永久删除。", type: "success" }); } catch(e) { setNotification({title: '删除失败', message: '操作未能完成', type: 'error'}); } setLoading(false); setShowDeleteModal(false); setPendingDelete(null); };
 
     const handleSaveAccount = async () => {
         if (!accountForm.username) return setNotification({title: '提示', message: '请填写用户名', type: 'error'});
@@ -1971,7 +1981,7 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
             <section className="absolute inset-0 flex flex-col bg-slate-100">
                 <div className="bg-white p-3 md:p-4 border-b border-zinc-200 flex flex-col md:flex-row gap-3 items-center shadow-sm z-10 shrink-0">
                     <div className="relative w-full md:flex-1 md:max-w-xl"><span className="absolute left-3 top-2.5 text-slate-400"><Icon d={PATHS.Search}/></span><input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="搜索图片..." className="w-full pl-9 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm outline-none" /></div>
-                    <div className="flex w-full md:w-auto items-center gap-2 text-sm justify-between"><button onClick={openAddImage} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg py-2">上传图片</button></div>
+                    <div className="flex w-full md:w-auto items-center gap-2 text-sm justify-between"><button onClick={openAddImage} className="hidden md:block px-3 bg-slate-800 text-white text-xs font-bold rounded-lg py-2">上传图片</button>{userRole === 'admin' && <button onClick={handleMigrateImages} disabled={uploading} className="hidden md:block px-3 bg-amber-600 text-white text-xs font-bold rounded-lg py-2">{uploading ? '迁移中...' : '迁移旧图片'}</button>}</div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3 md:p-4 relative">
                     {images.length === 0 && !loading && (<div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs"><Icon d={PATHS.Image} className="w-8 h-8 mb-2 opacity-50"/>暂无图片数据</div>)}
