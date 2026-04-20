@@ -100,18 +100,23 @@
             
             getImages: async () => window.fbOps.apiCall('GET', '/api/db/images'),
             uploadImage: async (file, title, tags) => {
-                const base64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = e => resolve(e.target.result.split(',')[1]);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
+                let imageData, mimeType;
+                if (window.UtilsLib && window.UtilsLib.compressImage) {
+                    const compressed = await window.UtilsLib.compressImage(file, 1600, 0.85);
+                    imageData = compressed.data;
+                    mimeType = compressed.mimeType;
+                } else {
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    imageData = dataUrl.split(',')[1];
+                    mimeType = file.type || 'image/jpeg';
+                }
                 await window.fbOps.apiCall('POST', '/api/upload-image', {
-                    imageData: base64,
-                    mimeType: file.type || 'image/jpeg',
-                    title,
-                    tags,
-                    time: new Date().toISOString()
+                    imageData, mimeType, title, tags, time: new Date().toISOString()
                 });
                 return await window.fbOps.getImages();
             },
