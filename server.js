@@ -15,6 +15,9 @@ const cachePool = {
     'gemini-3.1-flash-lite-preview': { id: null, hash: null, expireTime: null }
 };
 
+// 并发去重：同一模型同一 hash 并发创建请求共用一个 Promise
+const inFlightCreation = {};
+
 let cacheStore = null;
 async function hydrateCachePool() {
     try {
@@ -217,37 +220,65 @@ app.post('/api/gemini', async (req, res) => {
         const currentSystemPrompt = messages.systemInstruction?.parts?.[0]?.text || "";
         const currentHash = simpleHash(currentSystemPrompt);
 
+        // cacheAction 用于在响应头上告诉前端本次动作（hit/created/skipped/failed）
+        // - skipped: prompt 太短（<2000 字），不启用缓存
+        // - hit: 使用了既有 cacheId
+        // - created: 本次刚创建了新缓存并使用
+        // - failed: 创建失败或远端已失效，本次走全量
+        let cacheAction = 'skipped';
+
         // 缓存创建改为 await：让**当前这次**请求就用上 cacheId，而不是白白多付一次全量。
         // 同时在 hash 变化时先 DELETE 老缓存，避免孤儿缓存按存储时间继续计费。
+        // 并发去重：同一模型同一 hash 的并发请求共用一次创建。
         if (currentSystemPrompt.length > 2000 && (!modelCache.id || modelCache.hash !== currentHash)) {
-            const oldId = modelCache.id;
-            try {
-                console.log(`[Auto-Cache] 触发自动长效缓存机制... 模型: ${TARGET_MODEL}`);
-                const createRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: `models/${TARGET_MODEL}`,
-                        contents: [],
-                        systemInstruction: { parts: [{ text: currentSystemPrompt }] },
-                        ttl: '2592000s'
-                    })
-                });
-                const createData = await createRes.json();
-                if (createData.name) {
-                    modelCache.id = createData.name;
-                    modelCache.hash = currentHash;
-                    modelCache.expireTime = createData.expireTime || null;
-                    console.log(`[Auto-Cache] ✅ 缓存创建成功! 模型: ${TARGET_MODEL}, ID: ${modelCache.id}`);
-                    persistCachePool(TARGET_MODEL);
-                    // 老缓存异步删除，不阻塞本次请求
-                    if (oldId && oldId !== modelCache.id) deleteRemoteCache(API_KEY, oldId);
-                } else if (createData.error) {
-                    console.error("[Auto-Cache] 创建失败，本次走全量:", createData.error.message);
-                }
-            } catch (e) {
-                console.error("[Auto-Cache] 请求异常，本次走全量:", e.message);
+            const flightKey = `${TARGET_MODEL}:${currentHash}`;
+            if (!inFlightCreation[flightKey]) {
+                const oldId = modelCache.id;
+                inFlightCreation[flightKey] = (async () => {
+                    try {
+                        console.log(`[Auto-Cache] 触发自动长效缓存机制... 模型: ${TARGET_MODEL}`);
+                        const createRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                model: `models/${TARGET_MODEL}`,
+                                contents: [],
+                                systemInstruction: { parts: [{ text: currentSystemPrompt }] },
+                                ttl: '2592000s'
+                            })
+                        });
+                        const createData = await createRes.json();
+                        if (createData.name) {
+                            modelCache.id = createData.name;
+                            modelCache.hash = currentHash;
+                            modelCache.expireTime = createData.expireTime || null;
+                            console.log(`[Auto-Cache] ✅ 缓存创建成功! 模型: ${TARGET_MODEL}, ID: ${modelCache.id}`);
+                            persistCachePool(TARGET_MODEL);
+                            if (oldId && oldId !== modelCache.id) deleteRemoteCache(API_KEY, oldId);
+                            return 'created';
+                        }
+                        if (createData.error) {
+                            console.error("[Auto-Cache] 创建失败，本次走全量:", createData.error.message);
+                        }
+                        return 'failed';
+                    } catch (e) {
+                        console.error("[Auto-Cache] 请求异常，本次走全量:", e.message);
+                        return 'failed';
+                    }
+                })();
+            } else {
+                console.log(`[Auto-Cache] 复用正在创建的缓存 (并发去重): ${flightKey}`);
             }
+            try {
+                const result = await inFlightCreation[flightKey];
+                cacheAction = result === 'created'
+                    ? (modelCache.hash === currentHash ? 'created' : 'failed')
+                    : 'failed';
+            } finally {
+                delete inFlightCreation[flightKey];
+            }
+        } else if (modelCache.id && modelCache.hash === currentHash) {
+            cacheAction = 'hit';
         }
 
         const sendRequest = async (useCacheId) => {
@@ -278,6 +309,7 @@ app.post('/api/gemini', async (req, res) => {
                 modelCache.expireTime = null;
                 persistCachePool(TARGET_MODEL);
                 googleResponse = await sendRequest(null);
+                cacheAction = 'failed';
             }
         } else {
             googleResponse = await sendRequest(null);
@@ -285,8 +317,15 @@ app.post('/api/gemini', async (req, res) => {
 
         if (!googleResponse.ok) {
             const errText = await googleResponse.text();
+            res.setHeader('X-Cache-Action', cacheAction);
             return res.status(googleResponse.status).json({ error: errText });
         }
+
+        // 在响应开始前设置诊断 header（对流式/非流式都有效）
+        res.setHeader('X-Cache-Action', cacheAction);
+        res.setHeader('X-Cache-Model', TARGET_MODEL);
+        res.setHeader('X-Cache-Thinking', THINKING_LEVEL);
+        res.setHeader('Access-Control-Expose-Headers', 'X-Cache-Action, X-Cache-Model, X-Cache-Thinking');
 
         if (stream) {
             res.setHeader('Content-Type', 'text/event-stream');
