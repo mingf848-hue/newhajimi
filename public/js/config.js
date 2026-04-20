@@ -91,11 +91,3 @@ class ErrorBoundary extends Component {
     }
 }
 
-// ==========================================
-// Firebase 就绪等待
-// ==========================================
-const waitForFirebase = () => new Promise(resolve => {
-    if (window.firebaseLoaded) return resolve();
-    const timer = setTimeout(() => { console.warn("Firebase wait timeout"); resolve(); }, 15000);
-    window.onFirebaseReady = () => { clearTimeout(timer); resolve(); };
-});
