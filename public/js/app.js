@@ -762,6 +762,17 @@ function App() {
     const handleSaveCloudPrompts = (type) => { setSaveConfirmType(type); };
     const handleSaveScript = async () => { updateActivity(); if (!scriptForm.content) return setNotification({title: '提示', message: '内容不能为空', type: 'error'}); setSaveStatus('saving'); try { await window.fbOps.saveScript(scriptForm); const s = await window.fbOps.getScripts(); setScripts(s); setShowScriptModal(false); setSaveStatus('success'); setTimeout(() => setSaveStatus('idle'), 2000); await loadData(); } catch (e) { setNotification({title: '保存失败', message: e.message, type: 'error'}); setSaveStatus('idle'); } };
     const openAddImage = () => { updateActivity(); setImageForm({ file: null, preview: null, title: '', tags: '' }); setShowImageModal(true); };
+    useEffect(() => {
+        if (!showImageModal) return;
+        const handlePaste = (e) => {
+            const imgItem = Array.from(e.clipboardData?.items || []).find(it => it.type.startsWith('image/'));
+            if (!imgItem) return;
+            const file = imgItem.getAsFile();
+            if (file) setImageForm(f => ({ ...f, file, preview: URL.createObjectURL(file) }));
+        };
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [showImageModal]);
     const handleMigrateImages = async () => {
         if (!window.confirm('将把所有 Firebase 图片下载并存入 MongoDB，完成后图片链接将切换为本地地址。继续？')) return;
         setUploading(true);
@@ -1481,7 +1492,7 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
                            {imageForm.preview ? (
                                <img src={imageForm.preview} className="max-h-32 object-contain rounded" />
                            ) : (
-                               <div className="text-slate-400 flex flex-col items-center"><Icon d={PATHS.Image} className="w-8 h-8 mb-2"/><span className="text-sm font-bold">点击选择图片</span></div>
+                               <div className="text-slate-400 flex flex-col items-center"><Icon d={PATHS.Image} className="w-8 h-8 mb-2"/><span className="text-sm font-bold">点击选择 / 直接粘贴图片</span><span className="text-xs mt-1">Ctrl+V 粘贴截图</span></div>
                            )}
                            <input type="file" className="hidden" ref={fileInputRef} accept="image/*" onChange={e => {
                                const file = e.target.files[0];
