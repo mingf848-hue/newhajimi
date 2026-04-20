@@ -1266,7 +1266,22 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
         {/* ===== 场馆规则库 弹窗 ===== */}
         {showVenueModal && (
             <div className="venue-modal-overlay" onClick={() => setShowVenueModal(false)}>
-                <div className="venue-modal" onClick={e => e.stopPropagation()}>
+                <div className="venue-modal" onClick={e => e.stopPropagation()} onPaste={e => {
+                    // 如果正在提取中，或者没有选中任何场馆，则忽略粘贴
+                    if (venueExtracting || !activeVenueId) return;
+                    const items = Array.from(e.clipboardData?.items || []);
+                    const imgFiles = items.filter(it => it.type.startsWith('image/')).map(it => it.getAsFile()).filter(Boolean);
+                    
+                    if (imgFiles.length > 0) {
+                        const hasText = items.some(it => it.type === 'text/plain');
+                        const activeTag = document.activeElement?.tagName?.toLowerCase();
+                        // 如果光标在输入框内且剪贴板里有文本，则交由浏览器默认处理（粘贴文本）
+                        if ((activeTag === 'input' || activeTag === 'textarea') && hasText) return;
+                        
+                        e.preventDefault();
+                        handleVenueImagesUpload(imgFiles);
+                    }
+                }}>
                     <div className="venue-modal-head">
                         <div className="venue-modal-title">
                             <Icon d={PATHS.Shield} className="w-5 h-5"/>
@@ -1356,7 +1371,7 @@ ${accumulated ? accumulated.substring(0, 12000) : '(当前场馆无已有规则)
                                             <Icon d={PATHS.Image} className="w-5 h-5"/>
                                         </div>
                                         <div className="venue-dropzone-text">
-                                            {venueDragging ? '松开即可上传' : '点击或拖拽图片上传（支持批量）'}
+                                            {venueDragging ? '松开即可上传' : '点击、拖拽或 Ctrl+V 粘贴图片上传（支持批量）'}
                                         </div>
                                         <div className="venue-dropzone-hint">
                                             支持 JPG / PNG / WebP，可一次上传几十张，AI 会自动提取规则条款
