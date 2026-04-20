@@ -191,7 +191,13 @@ app.post('/api/migrate-images', async (req, res) => {
         const ImageModel = getModel('images');
         const docs = await ImageModel.find({}).lean();
         let migrated = 0, skipped = 0, failed = 0;
-        const todo = docs.filter(d => d.url && d.url.includes('firebasestorage') && !d.imageData);
+        const failedUrls = [];
+        // 迁移所有外部 http(s) URL 且未有 imageData 的记录（不再限定 Firebase 域名）
+        const todo = docs.filter(d =>
+            d.url
+            && /^https?:\/\//i.test(d.url)
+            && !d.imageData
+        );
         skipped = docs.length - todo.length;
 
         const CONCURRENCY = 5;
@@ -199,8 +205,8 @@ app.post('/api/migrate-images', async (req, res) => {
             const batch = todo.slice(i, i + CONCURRENCY);
             await Promise.all(batch.map(async (doc) => {
                 try {
-                    const resp = await fetch(doc.url);
-                    if (!resp.ok) { failed++; return; }
+                    const resp = await fetch(doc.url, { redirect: 'follow' });
+                    if (!resp.ok) { failed++; failedUrls.push({ url: doc.url, status: resp.status }); return; }
                     const buffer = await resp.arrayBuffer();
                     const base64 = Buffer.from(buffer).toString('base64');
                     const ct = resp.headers.get('content-type') || 'image/jpeg';
@@ -210,10 +216,24 @@ app.post('/api/migrate-images', async (req, res) => {
                         $set: { imageData: base64, mimeType, url: `/api/images/${id}`, storagePath: null }
                     });
                     migrated++;
-                } catch (e) { failed++; }
+                } catch (e) {
+                    failed++;
+                    failedUrls.push({ url: doc.url, error: e.message });
+                }
             }));
         }
-        res.json({ success: true, migrated, skipped, failed, total: docs.length });
+        // 返回样本 URL 方便排查
+        const skippedSamples = docs
+            .filter(d => !todo.includes(d))
+            .slice(0, 3)
+            .map(d => ({ id: d._id, url: d.url, hasImageData: !!d.imageData }));
+        res.json({
+            success: true,
+            migrated, skipped, failed,
+            total: docs.length,
+            skippedSamples,
+            failedSamples: failedUrls.slice(0, 5)
+        });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

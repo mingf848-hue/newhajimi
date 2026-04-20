@@ -778,7 +778,14 @@ function App() {
         setUploading(true);
         try {
             const r = await window.fbOps.migrateImagesToMongoDB();
-            setNotification({ title: '迁移完成', message: `成功: ${r.migrated}，跳过: ${r.skipped}，失败: ${r.failed}`, type: 'success' });
+            let extra = '';
+            if (r.migrated === 0 && r.skippedSamples?.length) {
+                extra = '\n\n跳过样本 URL：\n' + r.skippedSamples.map(s => `- ${s.url}${s.hasImageData ? ' (已迁移)' : ''}`).join('\n');
+            }
+            if (r.failedSamples?.length) {
+                extra += '\n\n失败样本：\n' + r.failedSamples.map(s => `- ${s.url} (${s.status || s.error})`).join('\n');
+            }
+            setNotification({ title: '迁移完成', message: `成功: ${r.migrated}，跳过: ${r.skipped}，失败: ${r.failed}${extra}`, type: 'success' });
             setImages(await window.fbOps.getImages());
         } catch (e) { setNotification({ title: '迁移失败', message: e.message, type: 'error' }); }
         setUploading(false);
