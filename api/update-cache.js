@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     console.log(`[Cache] 正在尝试创建缓存... 模型: ${targetModel}`);
 
     // 2. 缓存有效期 (设置为 30 天)
-    const CACHE_TTL_SECONDS = 2592000; 
+    const CACHE_TTL_SECONDS = 3600; 
 
     // 3. 请求 Google API 创建缓存
     const createRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${API_KEY}`, {
